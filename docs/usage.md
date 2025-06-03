@@ -1,15 +1,16 @@
-# Использование Talkie
+#sing Talkie
 
-## Параллельное выполнение запросов
+## Parallel execution of requests
 
-Talkie позволяет выполнять несколько HTTP-запросов параллельно, что значительно экономит время при работе с множественными API-вызовами.
+Talkie allows you to execute multiple HTTP requests in parallel, which saves significant time when dealing with multiple API calls.
 
-### Основное использование
+### Basic Use
 
-Наиболее простой способ использования параллельных запросов — создать файл со списком запросов:
+The simplest way to use parallel queries is to create a file with a list of queries:
 
 ```bash
-# Создаем файл с запросами
+# Create a request file
+
 cat > requests.txt << EOF
 GET https://jsonplaceholder.typicode.com/posts/1
 GET https://jsonplaceholder.typicode.com/posts/2
@@ -22,15 +23,15 @@ EOF
 talkie parallel -f requests.txt
 ```
 
-### Формат файла запросов
+### Query file format
 
-Каждая строка файла должна содержать HTTP-метод и URL, разделенные пробелом:
+Each line of the file must contain an HTTP method and URL, separated by a space:
 
 ```
 METHOD URL
 ```
 
-Например:
+For example:
 
 ```
 GET https://api.example.com/users/1
@@ -39,81 +40,81 @@ PUT https://api.example.com/users/1
 DELETE https://api.example.com/users/2
 ```
 
-Комментарии в файле начинаются с символа `#`:
+Comments in the file start with the `#` character:
 
 ```
-# Это комментарий
-GET https://api.example.com/users/1  # Это тоже комментарий
+# This is a comment
+GET https://api.example.com/users/1 # This is also a comment
 ```
 
-### Управление параллелизмом
+### Controlling parallelism
 
-Вы можете контролировать количество одновременно выполняемых запросов с помощью опции `--concurrency`:
+You can control the number of concurrent requests with the `--concurrency` option:
 
 ```bash
-# Максимум 5 одновременных запросов
+# Maximum 5 concurrent requests
 talkie parallel -f requests.txt --concurrency 5
 ```
 
-Для распределения нагрузки можно добавить задержку между запросами:
+To distribute the load, you can add a delay between requests:
 
 ```bash
-# Задержка 0.5 секунды между запросами
+# 0.5 second delay between requests
 talkie parallel -f requests.txt --delay 0.5
 ```
 
-### Сохранение результатов
+### Saving results
 
-Результаты параллельных запросов можно сохранить в отдельные файлы:
+You can save the results of parallel requests to separate files:
 
 ```bash
-# Сохранение в директорию ./results
+# Save to the ./results directory
 talkie parallel -f requests.txt --output-dir ./results
 ```
 
-Для каждого запроса будет создан отдельный файл с именем вида `req_N.txt`, содержащий статус, заголовки и тело ответа.
+For each request, a separate file will be created with a name like `req_N.txt`, containing the status, headers and body of the response.
 
-### Выполнение запросов из командной строки
+### Executing queries from the command line
 
-Вместо файла можно указать запросы непосредственно в командной строке:
+Instead of a file, you can specify queries directly on the command line:
 
 ```bash
-# Выполнение нескольких GET-запросов
+# Executing multiple GET requests
 talkie parallel -X GET -u "/posts/1" -u "/posts/2" -u "/users/1" -b "https://jsonplaceholder.typicode.com"
 ```
 
-Здесь:
-- `-X GET` — HTTP-метод для всех запросов
-- `-u "/posts/1"` — относительные пути (можно указать несколько)
-- `-b "https://jsonplaceholder.typicode.com"` — базовый URL для всех запросов
+Here:
+- `-X GET` — HTTP method for all requests
+- `-u "/posts/1"` — relative paths (multiple can be specified)
+- `-b "https://jsonplaceholder.typicode.com"` — base URL for all requests
 
-### Отображение прогресса и сводки
+### Displaying progress and summary
 
-Talkie показывает прогресс выполнения запросов и выводит сводку после завершения:
+Talkie shows the progress of queries and displays a summary after completion:
 
 ```
-Сводка по результатам:
-Всего запросов: 5
-Успешно выполнено: 5
+Result summary:
+Total requests: 5
+Successful: 5
 
-Коды ответа:
-  200: 5
+Response codes:
+200: 5
 
-Результаты сохранены в директорию: ./results
+Results saved to directory: ./results
 ```
 
-Для отключения вывода сводки используйте флаг `--no-summary`:
+To disable summary output, use the `--no-summary` flag:
 
 ```bash
 talkie parallel -f requests.txt --no-summary
 ```
 
-### Примеры использования
+### Usage examples
 
-#### Мониторинг множества сервисов
+#### Monitoring multiple services
 
 ```bash
-# Проверка доступности нескольких сервисов
+# Checking availability of multiple services
 cat > healthchecks.txt << EOF
 GET https://service1.example.com/health
 GET https://service2.example.com/health
@@ -124,10 +125,10 @@ EOF
 talkie parallel -f healthchecks.txt --concurrency 10
 ```
 
-#### Пакетное получение данных
+#### Batch data retrieval
 
 ```bash
-# Получение данных по нескольким пользователям
+# Retrieving data for multiple users
 cat > users.txt << EOF
 GET https://api.example.com/users/1
 GET https://api.example.com/users/2
@@ -139,32 +140,40 @@ EOF
 talkie parallel -f users.txt --output-dir ./users_data
 ```
 
-#### Загрузка множества ресурсов
+#### Loading multiple resources
 
 ```bash
-# Загрузка нескольких изображений
+# Loading multiple images
 talkie parallel -X GET \
-  -u "/logo.png" \
-  -u "/banner.jpg" \
-  -u "/icon.svg" \
-  -b "https://static.example.com" \
-  --output-dir ./images
+-u "/logo.png" \
+-u "/banner.jpg" \
+-u "/icon.svg" \
+-b "https://static.example.com" \
+--output-dir ./images
 ```
 
-### Обработка ошибок
+### Error handling
 
-При возникновении ошибок в запросах, Talkie продолжит выполнение остальных запросов и включит информацию об ошибках в сводку:
+When an error occurs errors in requests, Talkie will continue to process the remaining requests and include the error information in the summary:
 
 ```
-Сводка по результатам:
-Всего запросов: 5
-Успешно выполнено: 3
-Завершилось с ошибками: 2
+Result Summary:
+Total Requests: 5
+Successful: 3
+Failed with Errors: 2
 
-Ошибки:
-  req_2: ConnectTimeout: Connection timed out
-  req_4: ConnectError: Connection refused
+Errors:
+req_2: ConnectTimeout: Connection timed out
+req_4: ConnectError: Connection refused
 
-Коды ответа:
-  200: 3
-``` 
+Response Codes:
+200: 3
+```
+
+# Making parallel requests
+
+You can execute multiple requests in parallel using the `--parallel` flag:
+
+```bash
+talkie get https://api.example.com/users/1 https://api.example.com/users/2 https://api.example.com/users/3 --parallel
+```

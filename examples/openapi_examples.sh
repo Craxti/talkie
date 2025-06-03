@@ -1,18 +1,18 @@
 #!/bin/bash
-# Примеры использования OpenAPI-функциональности Talkie
+# Examples of using OpenAPI functionality in Talkie
 
-# Инспекция спецификации OpenAPI из Petstore
-echo "=== Инспекция OpenAPI из Petstore ==="
+# Inspecting OpenAPI specification from Petstore
+echo "=== Inspecting OpenAPI from Petstore ==="
 talkie openapi https://petstore.swagger.io/v2/swagger.json
 
-# Локальная спецификация (предположим, что файл существует)
-echo -e "\n=== Инспекция локальной OpenAPI-спецификации ==="
+# Local specification (assuming the file exists)
+echo -e "\n=== Inspecting local OpenAPI specification ==="
 # talkie openapi ./swagger.yaml
 
-# Получение информации об API без отображения эндпоинтов
-echo -e "\n=== Инспекция OpenAPI без отображения эндпоинтов ==="
+# Getting API information without displaying endpoints
+echo -e "\n=== Inspecting OpenAPI without displaying endpoints ==="
 talkie openapi https://petstore.swagger.io/v2/swagger.json --no-endpoints
 
-# Отправка запроса к эндпоинту из OpenAPI спецификации
-echo -e "\n=== Отправка запроса к эндпоинту из OpenAPI спецификации ==="
+# Sending request to endpoint from OpenAPI specification
+echo -e "\n=== Sending request to endpoint from OpenAPI specification ==="
 talkie get https://petstore.swagger.io/v2/pet/findByStatus -q "status=available" 

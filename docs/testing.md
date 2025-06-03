@@ -1,135 +1,135 @@
-# Руководство по тестированию Talkie
+# Talkie Testing Guide
 
-## Содержание
-1. [Введение](#введение)
-2. [Настройка тестового окружения](#настройка-тестового-окружения)
-3. [Структура тестов](#структура-тестов)
-4. [Запуск тестов](#запуск-тестов)
-5. [Мок-сервер](#мок-сервер)
-6. [Написание тестов](#написание-тестов)
-7. [Известные проблемы](#известные-проблемы)
+## Contents
+1. [Introduction](#introduction)
+2. [Setting Up a Test Environment](#setting-up-a-test-environment)
+3. [Test Structure](#test-structure)
+4. [Running Tests](#running-tests)
+5. [Mock Server](#mock-server)
+6. [Writing Tests](#writing-tests)
+7. [Known Issues](#known-issues)
 
-## Введение
+## Introduction
 
-Talkie использует `pytest` для модульного и интеграционного тестирования. Тесты охватывают все основные компоненты приложения:
-- CLI интерфейс
-- Построение HTTP-запросов
-- Обработка ответов
-- Работа с OpenAPI спецификациями
-- Интеграционные тесты с мок-сервером
+Talkie uses `pytest` for unit and integration testing. The tests cover all the main components of the application:
+- CLI interface
+- Building HTTP requests
+- Processing responses
+- Working with OpenAPI specifications
+- Integration tests with a mock server
 
-## Настройка тестового окружения
+## Setting up the test environment
 
-1. Установите зависимости для тестирования:
+1. Install dependencies for testing:
 ```bash
 pip install pytest pytest-httpserver pytest-asyncio pytest-mock pytest-cov
 ```
 
-2. Убедитесь, что у вас установлены все основные зависимости проекта:
+2. Make sure that you have installed all the main dependencies of the project:
 ```bash
 pip install -r requirements.txt
 ```
 
-## Структура тестов
+## Test structure
 
-Тесты организованы по модулям:
-- `tests/test_cli.py` - тесты CLI интерфейса
-- `tests/test_request_builder.py` - тесты построителя запросов
-- `tests/test_integration.py` - интеграционные тесты
-- `tests/test_openapi.py` - тесты работы с OpenAPI
-- `tests/test_formatter.py` - тесты форматирования данных
-- `tests/test_client.py` - тесты HTTP-клиента
+The tests are organized by modules:
+- `tests/test_cli.py` - CLI interface tests
+- `tests/test_request_builder.py` - request builder tests
+- `tests/test_integration.py` - integration tests
+- `tests/test_openapi.py` - tests of working with OpenAPI
+- `tests/test_formatter.py` - data formatter tests
+- `tests/test_client.py` - HTTP client tests
 
-## Запуск тестов
+## Run tests
 
-### Запуск всех тестов
+### Run all tests
 ```bash
 python -m pytest tests/
 ```
 
-### Запуск с подробным выводом
+### Run with verbose output
 ```bash
 python -m pytest tests/ -v
 ```
 
-### Запуск конкретного теста
+### Run a specific test
 ```bash
 python -m pytest tests/test_request_builder.py -v
 ```
 
-### Запуск с покрытием кода
+### Run with code coverage
 ```bash
 python -m pytest tests/ --cov=talkie
 ```
 
-## Мок-сервер
+## Mock server
 
-Для интеграционных тестов используется `pytest-httpserver`. Пример настройки мок-сервера:
+`pytest-httpserver` is used for integration tests. Example of mock server setup:
 
 ```python
 @pytest.fixture
 def mock_server(request):
-    from pytest_httpserver import HTTPServer
-    
-    server = HTTPServer()
-    server.start()
-    
-    # Настройка ответов
-    server.expect_request("/api/users", method="GET").respond_with_json([
-        {"id": 1, "name": "User 1"},
-        {"id": 2, "name": "User 2"}
-    ])
-    
-    yield server
-    server.stop()
+from pytest_httpserver import HTTPServer
+
+server = HTTPServer()
+server.start()
+
+# Response setup
+server.expect_request("/api/users", method="GET").respond_with_json([
+{"id": 1, "name": "User 1"},
+{"id": 2, "name": "User 2"}
+])
+
+yield server
+server.stop()
 ```
 
-## Написание тестов
+## Test writing
 
-### Основные принципы
-1. Каждый тест должен быть независимым
-2. Используйте говорящие имена для тестов
-3. Следуйте паттерну AAA (Arrange-Act-Assert)
-4. Используйте фикстуры для общего кода
+### Basic principles
+1. Each test should be independent
+2. Use descriptive names for tests
+3. Follow the AAA (Arrange-Act-Assert) pattern
+4. Use fixtures for common code
 
-### Пример теста
+### Example test
 ```python
 def test_parse_headers():
-    """Тест разбора заголовков."""
-    headers = [
-        "Content-Type: application/json",
-        "Authorization: Bearer token123"
-    ]
-    
-    builder = RequestBuilder(
-        method="GET",
-        url="https://example.com/api",
-        headers=headers
-    )
-    
-    assert builder.headers == {
-        "Content-Type": "application/json",
-        "Authorization": "Bearer token123"
-    }
+"""Header parsing test."""
+headers = [
+"Content-Type: application/json",
+"Authorization: Bearer token123"
+]
+
+builder = RequestBuilder(
+method="GET",
+url="https://example.com/api",
+headers=headers
+)
+
+assert builder.headers == {
+"Content-Type": "application/json",
+"Authorization": "Bearer token123"
+}
 ```
 
-### Тестирование граничных случаев
-Обязательно тестируйте:
-- Пустые значения
-- Некорректные данные
-- Специальные символы
-- Граничные значения
-- Дублирующиеся данные
+### Edge case testing
+Make sure to test:
+- Empty values
+- Incorrect data
+- Special characters
+- Boundary values
+- Duplicate data
 
-## Известные проблемы
+## Known issues
 
-1. Предупреждение о deprecated методе в OpenAPI валидаторе:
-   - Исправлено путем замены `validate_spec` на `validate`
+1. Warning about deprecated method in OpenAPI validator:
+- Fixed by replacing `validate_spec` with `validate`
 
-2. Асинхронные тесты:
-   - При написании асинхронных тестов используйте `@pytest.mark.asyncio`
-   - Настройте область видимости цикла событий в `conftest.py`
+2. Asynchronous tests:
+- When writing asynchronous tests, use `@pytest.mark.asyncio`
+- Set up event loop scope in `conftest.py`
 
-3. Временные файлы:
-   - Используйте `tempfile` для создания временных файлов
-   - Убедитесь, что файлы удаляются после тестов 
+3. Temporary files:
+- Use `tempfile` to create temporary files
+- Make sure files are deleted after tests

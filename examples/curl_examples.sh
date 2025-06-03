@@ -1,30 +1,30 @@
 #!/bin/bash
-# Примеры использования функциональности генерации curl-команд в Talkie
+# Examples of using curl command generation functionality in Talkie
 
-# Простая генерация curl-команды
-echo "=== Генерация curl для GET-запроса ==="
+# Simple curl command generation
+echo "=== Generating curl for GET request ==="
 talkie curl https://jsonplaceholder.typicode.com/posts/1
 
-# Генерация curl для POST-запроса
-echo -e "\n=== Генерация curl для POST-запроса ==="
-talkie curl https://jsonplaceholder.typicode.com/posts -X POST -d "title=Тестовый пост" -d "body=Содержание поста" -d "userId:=1"
+# Generating curl for POST request
+echo -e "\n=== Generating curl for POST request ==="
+talkie curl https://jsonplaceholder.typicode.com/posts -X POST -d "title=Test post" -d "body=Post content" -d "userId:=1"
 
-# Генерация curl с заголовками
-echo -e "\n=== Генерация curl с заголовками ==="
+# Generating curl with headers
+echo -e "\n=== Generating curl with headers ==="
 talkie curl https://jsonplaceholder.typicode.com/posts -H "Content-Type: application/json" -H "Authorization: Bearer token123"
 
-# Генерация curl с параметрами запроса
-echo -e "\n=== Генерация curl с параметрами запроса ==="
+# Generating curl with query parameters
+echo -e "\n=== Generating curl with query parameters ==="
 talkie curl https://jsonplaceholder.typicode.com/posts -q "userId=1" -q "_limit=3"
 
-# Генерация с опциями verbose и insecure
-echo -e "\n=== Генерация curl с дополнительными опциями ==="
+# Generating curl with verbose and insecure options
+echo -e "\n=== Generating curl with additional options ==="
 talkie curl https://jsonplaceholder.typicode.com/posts -v -k
 
-# Добавление curl-команды к обычному запросу
-echo -e "\n=== Вывод curl при выполнении запроса ==="
+# Adding curl command to regular query
+echo -e "\n=== Output curl command when executing query ==="
 talkie get https://jsonplaceholder.typicode.com/posts/1 --curl
 
-# Получение только curl-команды без выполнения запроса
-echo -e "\n=== Получение только curl-команды без выполнения запроса ==="
+# Getting only curl command without executing query
+echo -e "\n=== Getting only curl command without executing query ==="
 talkie get https://jsonplaceholder.typicode.com/posts/1 --curl -v 

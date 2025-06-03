@@ -1,131 +1,131 @@
 #!/bin/bash
-# talkie_demo.sh - Комплексная демонстрация функциональности Talkie HTTP-клиента
+# talkie_demo.sh - Comprehensive demonstration of Talkie HTTP client functionality
 #
-# Этот скрипт демонстрирует основные возможности Talkie для работы с HTTP-запросами
-# и управления конфигурацией. Каждый раздел содержит комментарии, объясняющие
-# выполняемые команды.
+# This script demonstrates the main capabilities of Talkie for working with HTTP requests
+# and managing configuration. Each section contains comments explaining
+# the commands being executed.
 
-# Создаем директорию для выходных файлов
+# Create output directory
 mkdir -p ./demo_output
 
-# Функция для отображения заголовков разделов
+# Function to display section headers
 show_header() {
     echo -e "\n\033[1;36m=== $1 ===\033[0m"
     echo -e "\033[0;90m$2\033[0m\n"
 }
 
-# Функция для отображения планируемых функций
+# Function to display planned features
 show_planned_feature() {
-    echo -e "\n\033[1;33m⭐ ПЛАНИРУЕМАЯ ФУНКЦИЯ ⭐\033[0m"
-    echo -e "\033[0;90mСледующий пример демонстрирует, как будет работать функциональность, которая находится в разработке\033[0m\n"
+    echo -e "\n\033[1;33m⭐ PLANNED FEATURE ⭐\033[0m"
+    echo -e "\033[0;90mThe next example demonstrates how the functionality that is under development will work\033[0m\n"
 }
 
-# ---------- ЧАСТЬ 1: БАЗОВЫЕ HTTP-ЗАПРОСЫ ----------
+# ---------- PART 1: BASIC HTTP-REQUESTS ----------
 
-show_header "БАЗОВЫЕ HTTP-ЗАПРОСЫ" "Демонстрация основных HTTP-методов: GET, POST, PUT, DELETE"
+show_header "BASIC HTTP-REQUESTS" "Demonstration of basic HTTP methods: GET, POST, PUT, DELETE"
 
-echo -e "\033[0;33m# Простой GET-запрос - получение данных о посте\033[0m"
+echo -e "\033[0;33m# Simple GET-request - getting data about a post\033[0m"
 talkie get https://jsonplaceholder.typicode.com/posts/1
 
-echo -e "\n\033[0;33m# POST-запрос - создание нового поста с автоматическим определением типа JSON\033[0m"
-talkie post https://jsonplaceholder.typicode.com/posts title="Новый пост о Talkie" body="Это демонстрация возможностей Talkie" userId:=1
+echo -e "\n\033[0;33m# POST-request - creating a new post with automatic JSON type detection\033[0m"
+talkie post https://jsonplaceholder.typicode.com/posts title="New post about Talkie" body="This is a demonstration of Talkie's capabilities" userId:=1
 
-echo -e "\n\033[0;33m# PUT-запрос - обновление существующего поста\033[0m"
-talkie put https://jsonplaceholder.typicode.com/posts/1 title="Обновленный заголовок" body="Измененное содержание" userId:=1
+echo -e "\n\033[0;33m# PUT-request - updating an existing post\033[0m"
+talkie put https://jsonplaceholder.typicode.com/posts/1 title="Updated title" body="Changed content" userId:=1
 
-echo -e "\n\033[0;33m# DELETE-запрос - удаление поста\033[0m"
+echo -e "\n\033[0;33m# DELETE-request - deleting a post\033[0m"
 talkie delete https://jsonplaceholder.typicode.com/posts/1
 
-# ---------- ЧАСТЬ 2: ЗАГОЛОВКИ И ПАРАМЕТРЫ ----------
+# ---------- PART 2: HEADERS AND PARAMETERS ----------
 
-show_header "ЗАГОЛОВКИ И ПАРАМЕТРЫ" "Демонстрация работы с HTTP-заголовками и параметрами запроса"
+show_header "HEADERS AND PARAMETERS" "Demonstration of working with HTTP headers and request parameters"
 
-echo -e "\033[0;33m# GET-запрос с настраиваемыми заголовками\033[0m"
+echo -e "\033[0;33m# GET-request with custom headers\033[0m"
 talkie get https://httpbin.org/headers \
   -H "X-Custom-Header: demo-value" \
   -H "Accept: application/json" \
   -H "User-Agent: Talkie-Demo/1.0"
 
-echo -e "\n\033[0;33m# GET-запрос с параметрами запроса\033[0m"
+echo -e "\n\033[0;33m# GET-request with request parameters\033[0m"
 talkie get https://httpbin.org/get \
   -q "param1=value1" \
   -q "param2=value2" \
   -q "filter=active"
 
-echo -e "\n\033[0;33m# Комбинированный запрос с заголовками и параметрами\033[0m"
+echo -e "\n\033[0;33m# Combined request with headers and parameters\033[0m"
 talkie get https://httpbin.org/get \
   -H "Authorization: Bearer demo-token" \
   -q "page=1" \
   -q "limit=10"
 
-# ---------- ЧАСТЬ 3: ФОРМАТЫ ВЫВОДА ----------
+# ---------- PART 3: OUTPUT FORMATS ----------
 
-show_header "ФОРМАТЫ ВЫВОДА" "Демонстрация различных форматов вывода ответов"
+show_header "OUTPUT FORMATS" "Demonstration of different output formats of responses"
 
-echo -e "\033[0;33m# Подробный вывод с информацией о запросе и ответе\033[0m"
+echo -e "\033[0;33m# Detailed output with information about the request and response\033[0m"
 talkie get https://jsonplaceholder.typicode.com/posts/1 -v
 
-echo -e "\n\033[0;33m# Вывод только JSON-содержимого\033[0m"
+echo -e "\n\033[0;33m# Output only JSON-content\033[0m"
 talkie get https://jsonplaceholder.typicode.com/posts/1 --json
 
-echo -e "\n\033[0;33m# Вывод только заголовков ответа\033[0m"
+echo -e "\n\033[0;33m# Output only response headers\033[0m"
 talkie get https://jsonplaceholder.typicode.com/posts/1 --headers
 
-echo -e "\n\033[0;33m# Сохранение ответа в файл\033[0m"
+echo -e "\n\033[0;33m# Saving response to file\033[0m"
 talkie get https://jsonplaceholder.typicode.com/posts/1 -o ./demo_output/post.json
-echo "Результат сохранен в ./demo_output/post.json"
+echo "Result saved in ./demo_output/post.json"
 
-# ---------- ЧАСТЬ 4: ГЕНЕРАЦИЯ CURL-КОМАНД ----------
+# ---------- PART 4: CURL COMMAND GENERATION ----------
 
-show_header "ГЕНЕРАЦИЯ CURL-КОМАНД" "Демонстрация генерации curl-команд для совместимости"
+show_header "CURL COMMAND GENERATION" "Demonstration of generating curl commands for compatibility"
 
-echo -e "\033[0;33m# Генерация эквивалентной curl-команды\033[0m"
+echo -e "\033[0;33m# Generating equivalent curl command\033[0m"
 talkie curl https://jsonplaceholder.typicode.com/posts/1
 
-echo -e "\n\033[0;33m# Генерация curl-команды с заголовками и методом POST\033[0m"
+echo -e "\n\033[0;33m# Generating curl command with headers and POST method\033[0m"
 talkie curl https://jsonplaceholder.typicode.com/posts \
   -X POST \
   -H "Content-Type: application/json" \
-  -d "title=Тестовый пост" \
-  -d "body=Содержимое тестового поста" \
+  -d "title=Test post" \
+  -d "body=Content of test post" \
   -d "userId:=1"
 
-echo -e "\n\033[0;33m# Выполнение GET-запроса с отображением curl-команды\033[0m"
+echo -e "\n\033[0;33m# Executing GET-request with curl command display\033[0m"
 talkie get https://jsonplaceholder.typicode.com/posts/1 --curl
 
-# ---------- ЧАСТЬ 5: РАБОТА С OPENAPI ----------
+# ---------- PART 5: OPENAPI INSPECTION ----------
 
-show_header "ИНСПЕКЦИЯ OPENAPI" "Демонстрация инспекции OpenAPI-спецификаций"
+show_header "OPENAPI INSPECTION" "Demonstration of inspecting OpenAPI specifications"
 
-echo -e "\033[0;33m# Инспекция публичной OpenAPI-спецификации\033[0m"
+echo -e "\033[0;33m# Inspection of public OpenAPI specification\033[0m"
 talkie openapi https://petstore.swagger.io/v2/swagger.json
 
-# ---------- ЧАСТЬ 6: ФОРМАТИРОВАНИЕ ФАЙЛОВ ----------
+# ---------- PART 6: FILE FORMATTING ----------
 
-show_header "ФОРМАТИРОВАНИЕ ФАЙЛОВ" "Демонстрация форматирования различных типов файлов"
+show_header "FILE FORMATTING" "Demonstration of formatting different types of files"
 
-# Создаем тестовый JSON-файл
-echo '{"name":"Talkie Demo","version":"1.0","features":["HTTP-клиент","Форматирование","OpenAPI"],"settings":{"verbose":true,"timeout":30}}' > ./demo_output/test.json
+# Create test JSON file
+echo '{"name":"Talkie Demo","version":"1.0","features":["HTTP-client","Formatting","OpenAPI"],"settings":{"verbose":true,"timeout":30}}' > ./demo_output/test.json
 
-echo -e "\033[0;33m# Форматирование JSON-файла с выводом на экран\033[0m"
+echo -e "\033[0;33m# Formatting JSON file with output to screen\033[0m"
 talkie format ./demo_output/test.json
 
-echo -e "\n\033[0;33m# Форматирование JSON-файла и сохранение результата\033[0m"
+echo -e "\n\033[0;33m# Formatting JSON file and saving result\033[0m"
 talkie format ./demo_output/test.json -o ./demo_output/formatted.json
-echo "Отформатированный JSON сохранен в ./demo_output/formatted.json"
+echo "Formatted JSON saved in ./demo_output/formatted.json"
 
-# Создаем тестовый XML-файл
-echo '<root><item id="1"><name>Элемент 1</name><enabled>true</enabled></item><item id="2"><name>Элемент 2</name><enabled>false</enabled></item></root>' > ./demo_output/test.xml
+# Create test XML file
+echo '<root><item id="1"><name>Item 1</name><enabled>true</enabled></item><item id="2"><name>Item 2</name><enabled>false</enabled></item></root>' > ./demo_output/test.xml
 
-echo -e "\n\033[0;33m# Форматирование XML-файла\033[0m"
+echo -e "\n\033[0;33m# Formatting XML file\033[0m"
 talkie format ./demo_output/test.xml -o ./demo_output/formatted.xml
-echo "Отформатированный XML сохранен в ./demo_output/formatted.xml"
+echo "Formatted XML saved in ./demo_output/formatted.xml"
 
-# ---------- ЧАСТЬ 7: УПРАВЛЕНИЕ КОНФИГУРАЦИЕЙ ----------
+# ---------- PART 7: CONFIGURATION MANAGEMENT ----------
 
-show_header "УПРАВЛЕНИЕ КОНФИГУРАЦИЕЙ" "Демонстрация работы с конфигурационным файлом и окружениями"
+show_header "CONFIGURATION MANAGEMENT" "Demonstration of working with configuration file and environments"
 
-echo -e "\033[0;33m# Создание тестового конфигурационного файла\033[0m"
+echo -e "\033[0;33m# Creating test configuration file\033[0m"
 mkdir -p ~/.talkie
 cat > ~/.talkie/config.json << EOF
 {
@@ -152,20 +152,20 @@ cat > ~/.talkie/config.json << EOF
   "active_environment": "jsonplaceholder"
 }
 EOF
-echo "Создан тестовый конфигурационный файл ~/.talkie/config.json"
+echo "Created test configuration file ~/.talkie/config.json"
 
-echo -e "\n\033[0;33m# Использование активного окружения (jsonplaceholder)\033[0m"
+echo -e "\n\033[0;33m# Using active environment (jsonplaceholder)\033[0m"
 talkie get /posts/1
 
-echo -e "\n\033[0;33m# Добавление новых заголовков поверх конфигурации\033[0m"
+echo -e "\n\033[0;33m# Adding new headers on top of configuration\033[0m"
 talkie get /posts/1 -H "X-Additional-Header: test-value"
 
-# ---------- ЧАСТЬ 8: ПАРАЛЛЕЛЬНЫЕ ЗАПРОСЫ ----------
+# ---------- PART 8: PARALLEL REQUESTS ----------
 
-show_header "ПАРАЛЛЕЛЬНЫЕ ЗАПРОСЫ" "Демонстрация выполнения нескольких запросов параллельно"
+show_header "PARALLEL REQUESTS" "Demonstration of executing multiple requests in parallel"
 show_planned_feature
 
-# Создаем тестовый файл с запросами
+# Create test file with requests
 cat > ./demo_output/requests.txt << EOF
 GET https://jsonplaceholder.typicode.com/posts/1
 GET https://jsonplaceholder.typicode.com/posts/2
@@ -174,32 +174,32 @@ GET https://jsonplaceholder.typicode.com/users/1
 GET https://jsonplaceholder.typicode.com/users/2
 EOF
 
-echo -e "\033[0;33m# Выполнение нескольких запросов параллельно из файла\033[0m"
+echo -e "\033[0;33m# Executing multiple requests in parallel from file\033[0m"
 echo -e "\033[0;90m# talkie parallel -f ./demo_output/requests.txt --concurrency 3\033[0m"
-echo -e "[ Будет выполнено 5 запросов с максимальным параллелизмом 3 ]"
+echo -e "[ Will execute 5 requests with maximum concurrency 3 ]"
 
-echo -e "\n\033[0;33m# Параллельное выполнение запросов с задержкой между ними\033[0m"
+echo -e "\n\033[0;33m# Parallel execution of requests with delay between them\033[0m"
 echo -e "\033[0;90m# talkie parallel -f ./demo_output/requests.txt --delay 0.5 --concurrency 2\033[0m"
-echo -e "[ Будет выполнено 5 запросов с задержкой 0.5с и параллелизмом 2 ]"
+echo -e "[ Will execute 5 requests with delay 0.5s and concurrency 2 ]"
 
-echo -e "\n\033[0;33m# Параллельные запросы с сохранением результатов в отдельные файлы\033[0m"
+echo -e "\n\033[0;33m# Parallel requests with saving results to separate files\033[0m"
 echo -e "\033[0;90m# talkie parallel -f ./demo_output/requests.txt --output-dir ./demo_output/results\033[0m"
-echo -e "[ Результаты будут сохранены в отдельные файлы в директории ./demo_output/results ]"
+echo -e "[ Results will be saved to separate files in directory ./demo_output/results ]"
 
-echo -e "\n\033[0;33m# Параллельные запросы с использованием шаблона URL\033[0m"
+echo -e "\n\033[0;33m# Parallel requests with using URL template\033[0m"
 echo -e "\033[0;90m# talkie parallel --url \"https://jsonplaceholder.typicode.com/posts/{1..10}\" --concurrency 5\033[0m"
-echo -e "[ Будет выполнено 10 запросов с подстановкой значений от 1 до 10 ]"
+echo -e "[ Will execute 10 requests with substituting values from 1 to 10 ]"
 
-# ---------- ЧАСТЬ 9: ИНТЕРАКТИВНЫЙ РЕЖИМ ----------
+# ---------- PART 9: INTERACTIVE MODE ----------
 
-show_header "ИНТЕРАКТИВНЫЙ РЕЖИМ" "Демонстрация интерактивного режима работы с историей запросов"
+show_header "INTERACTIVE MODE" "Demonstration of interactive mode of working with request history"
 show_planned_feature
 
-echo -e "\033[0;33m# Запуск Talkie в интерактивном режиме\033[0m"
+echo -e "\033[0;33m# Starting Talkie in interactive mode\033[0m"
 echo -e "\033[0;90m# talkie interactive\033[0m"
-echo -e "[ Запускает интерактивную оболочку с автодополнением и историей ]"
+echo -e "[ Starts interactive shell with auto-completion and history ]"
 
-echo -e "\n\033[0;33m# Пример работы в интерактивном режиме\033[0m"
+echo -e "\n\033[0;33m# Example of working in interactive mode\033[0m"
 cat << 'EOF' | sed 's/^/    /'
 talkie> get https://jsonplaceholder.typicode.com/posts/1
 {
@@ -209,39 +209,39 @@ talkie> get https://jsonplaceholder.typicode.com/posts/1
   "body": "..."
 }
 
-talkie> !last --headers  # Повторение последнего запроса с выводом только заголовков
+talkie> !last --headers  # Repeating last request with output only headers
 HTTP/1.1 200 OK
 Content-Type: application/json; charset=utf-8
 ...
 
-talkie> history  # Просмотр истории запросов
+talkie> history  # Viewing request history
 1: get https://jsonplaceholder.typicode.com/posts/1
 2: get https://jsonplaceholder.typicode.com/posts/1 --headers
 
-talkie> save history ./demo_output/session.log  # Сохранение истории запросов
+talkie> save history ./demo_output/session.log  # Saving request history
 
-talkie> env switch httpbin  # Переключение на другое окружение
+talkie> env switch httpbin  # Switching to another environment
 
-talkie> exit  # Выход из интерактивного режима
+talkie> exit  # Exit from interactive mode
 EOF
 
-echo -e "\n\033[0;33m# Восстановление сессии из файла истории\033[0m"
+echo -e "\n\033[0;33m# Restoring session from request history file\033[0m"
 echo -e "\033[0;90m# talkie interactive --history ./demo_output/session.log\033[0m"
-echo -e "[ Загружает ранее сохраненную историю запросов ]"
+echo -e "[ Loads previously saved request history ]"
 
-# ---------- ЧАСТЬ 10: ИНТЕГРАЦИЯ С CI/CD ----------
+# ---------- PART 10: INTEGRATION WITH CI/CD ----------
 
-show_header "ИНТЕГРАЦИЯ С CI/CD" "Демонстрация интеграции с инструментами непрерывной интеграции"
+show_header "INTEGRATION WITH CI/CD" "Demonstration of integration with continuous integration tools"
 show_planned_feature
 
-# Создаем тестовый конфигурационный файл для CI/CD
+# Create test configuration file for CI/CD
 cat > ./demo_output/ci-config.yml << EOF
-# Пример конфигурации для CI/CD
+# Example configuration for CI/CD
 base_url: https://api.example.com
 headers:
   Authorization: Bearer \${CI_API_TOKEN}
 tests:
-  - name: "Проверка статуса API"
+  - name: "Checking API status"
     request:
       method: GET
       path: /status
@@ -249,7 +249,7 @@ tests:
       status: 200
       body:
         contains: "operational"
-  - name: "Создание нового ресурса"
+  - name: "Creating new resource"
     request:
       method: POST
       path: /resources
@@ -260,19 +260,19 @@ tests:
       status: 201
 EOF
 
-echo -e "\033[0;33m# Запуск тестов API в окружении CI/CD\033[0m"
+echo -e "\033[0;33m# Running API tests in CI/CD environment\033[0m"
 echo -e "\033[0;90m# talkie ci run --config ./demo_output/ci-config.yml --reporter junit\033[0m"
-echo -e "[ Запускает набор тестов и форматирует отчет в формате JUnit XML ]"
+echo -e "[ Runs set of tests and formats report in JUnit XML format ]"
 
-echo -e "\n\033[0;33m# Проверка контракта API на соответствие спецификации\033[0m"
+echo -e "\n\033[0;33m# Checking API contract against specification\033[0m"
 echo -e "\033[0;90m# talkie ci validate --spec https://api.example.com/openapi.json --env production\033[0m"
-echo -e "[ Проверяет соответствие API спецификации ]"
+echo -e "[ Checks API against specification ]"
 
-echo -e "\n\033[0;33m# Проверка бюджета производительности в CI\033[0m"
+echo -e "\n\033[0;33m# Checking performance budget in CI\033[0m"
 echo -e "\033[0;90m# talkie ci performance --config ./demo_output/ci-config.yml --budget 200ms\033[0m"
-echo -e "[ Проверяет, что все запросы выполняются в рамках бюджета времени ]"
+echo -e "[ Checks that all requests are executed within time budget ]"
 
-echo -e "\n\033[0;33m# Интеграция с GitHub Actions\033[0m"
+echo -e "\n\033[0;33m# Integration with GitHub Actions\033[0m"
 cat << 'EOF' | sed 's/^/    /'
 # .github/workflows/api-tests.yml
 name: API Tests
@@ -302,21 +302,21 @@ jobs:
           CI_API_TOKEN: ${{ secrets.API_TOKEN }}
 EOF
 
-# ---------- ЧАСТЬ 11: ТЕСТОВЫЕ СЦЕНАРИИ ----------
+# ---------- PART 11: TEST SCENARIOS ----------
 
-show_header "ТЕСТОВЫЕ СЦЕНАРИИ" "Демонстрация создания и выполнения тестовых сценариев"
+show_header "TEST SCENARIOS" "Demonstration of creating and executing test scenarios"
 show_planned_feature
 
-# Создаем тестовый сценарий
+# Create test scenario
 cat > ./demo_output/test-scenario.yaml << EOF
-name: "Тестовый сценарий для API пользователей"
-description: "Демонстрация возможностей создания и проверки пользователей"
+name: "Test scenario for API users"
+description: "Demonstration of creating and checking users"
 variables:
   base_url: https://jsonplaceholder.typicode.com
   user_id: null
 
 steps:
-  - name: "Получение списка пользователей"
+  - name: "Getting user list"
     request:
       method: GET
       url: "\${base_url}/users"
@@ -327,20 +327,20 @@ steps:
     extract:
       first_user_id: "body[0].id"
       
-  - name: "Создание нового пользователя"
+  - name: "Creating new user"
     request:
       method: POST
       url: "\${base_url}/users"
       json:
-        name: "Тестовый пользователь"
+        name: "Test user"
         email: "test@example.com"
     assertions:
       - "status == 201"
-      - "body.name == 'Тестовый пользователь'"
+      - "body.name == 'Test user'"
     extract:
       user_id: "body.id"
       
-  - name: "Получение созданного пользователя"
+  - name: "Getting created user"
     request:
       method: GET
       url: "\${base_url}/users/\${user_id}"
@@ -349,28 +349,28 @@ steps:
       - "body.email == 'test@example.com'"
 EOF
 
-echo -e "\033[0;33m# Выполнение тестового сценария\033[0m"
+echo -e "\033[0;33m# Executing test scenario\033[0m"
 echo -e "\033[0;90m# talkie scenario run ./demo_output/test-scenario.yaml\033[0m"
-echo -e "[ Выполняет серию взаимосвязанных запросов с проверками ]"
+echo -e "[ Executes series of interconnected requests with checks ]"
 
-echo -e "\n\033[0;33m# Запись тестового сценария из интерактивной сессии\033[0m"
+echo -e "\n\033[0;33m# Recording test scenario from interactive session\033[0m"
 echo -e "\033[0;90m# talkie scenario record --output ./demo_output/recorded-scenario.yaml\033[0m"
-echo -e "[ Запускает интерактивный режим с записью всех действий в сценарий ]"
+echo -e "[ Starts interactive mode with recording all actions in scenario ]"
 
-echo -e "\n\033[0;33m# Запуск нескольких сценариев с параллельным выполнением\033[0m"
+echo -e "\n\033[0;33m# Executing multiple scenarios with parallel execution\033[0m"
 echo -e "\033[0;90m# talkie scenario run ./demo_output/scenarios/ --parallel 3 --reporter html\033[0m"
-echo -e "[ Выполняет все сценарии из директории параллельно и создает HTML-отчет ]"
+echo -e "[ Executes all scenarios from directory parallel and creates HTML report ]"
 
-echo -e "\n\033[0;33m# Параметризация сценария с данными из файла\033[0m"
+echo -e "\n\033[0;33m# Scenario parameterization with data from file\033[0m"
 echo -e "\033[0;90m# talkie scenario run ./demo_output/test-scenario.yaml --data ./demo_output/test-data.csv\033[0m"
-echo -e "[ Выполняет сценарий несколько раз с разными наборами данных ]"
+echo -e "[ Executes scenario several times with different data sets ]"
 
-# ---------- ЧАСТЬ 12: ПОДДЕРЖКА WEBSOCKET ----------
+# ---------- PART 12: WEBSOCKET SUPPORT ----------
 
-show_header "ПОДДЕРЖКА WEBSOCKET" "Демонстрация работы с WebSocket для API реального времени"
+show_header "WEBSOCKET SUPPORT" "Demonstration of working with WebSocket for API real-time"
 show_planned_feature
 
-echo -e "\033[0;33m# Подключение к WebSocket-серверу и отправка сообщения\033[0m"
+echo -e "\033[0;33m# Connecting to WebSocket server and sending message\033[0m"
 echo -e "\033[0;90m# talkie ws connect wss://echo.websocket.org\033[0m"
 cat << 'EOF' | sed 's/^/    /'
 Connected to wss://echo.websocket.org
@@ -383,11 +383,11 @@ Type 'exit' or press Ctrl+C to disconnect
 Connection closed
 EOF
 
-echo -e "\n\033[0;33m# Отправка сообщения и вывод только ответа\033[0m"
+echo -e "\n\033[0;33m# Sending message and output only response\033[0m"
 echo -e "\033[0;90m# talkie ws send wss://echo.websocket.org '{\"message\": \"Hello\"}'\033[0m"
 echo -e '    {"message": "Hello"}'
 
-echo -e "\n\033[0;33m# Мониторинг WebSocket-соединения в течение указанного времени\033[0m"
+echo -e "\n\033[0;33m# Monitoring WebSocket connection during specified time\033[0m"
 echo -e "\033[0;90m# talkie ws monitor wss://stream.example.com/prices --duration 10s\033[0m"
 cat << 'EOF' | sed 's/^/    /'
 Monitoring wss://stream.example.com/prices for 10 seconds...
@@ -398,7 +398,7 @@ Monitoring wss://stream.example.com/prices for 10 seconds...
 Monitoring completed. Received 15 messages.
 EOF
 
-echo -e "\n\033[0;33m# Использование WebSocket-подписок для получения обновлений\033[0m"
+echo -e "\n\033[0;33m# Using WebSocket subscriptions for getting updates\033[0m"
 echo -e "\033[0;90m# talkie ws subscribe wss://stream.example.com --topic 'updates/products' --filter 'category=electronics'\033[0m"
 cat << 'EOF' | sed 's/^/    /'
 Subscribing to 'updates/products' with filter 'category=electronics'
@@ -408,16 +408,16 @@ Subscription established
 ...
 EOF
 
-# ---------- ЗАКЛЮЧЕНИЕ ----------
+# ---------- CONCLUSION ----------
 
-show_header "ДЕМОНСТРАЦИЯ ЗАВЕРШЕНА" "Вы увидели текущие и планируемые возможности Talkie HTTP-клиента"
+show_header "DEMONSTRATION COMPLETED" "You saw current and planned capabilities of Talkie HTTP client"
 
-echo -e "Посетите документацию для получения подробной информации о доступных возможностях Talkie."
-echo -e "Все выходные файлы демонстрации сохранены в директории ./demo_output/\n"
+echo -e "Visit documentation for detailed information about available Talkie capabilities."
+echo -e "All demonstration output files saved in ./demo_output/\n"
 
-echo -e "\033[1;33mПланируемые функции:\033[0m"
-echo -e " - Параллельные запросы для повышения производительности"
-echo -e " - Интерактивный режим с историей запросов"
-echo -e " - Интеграция с инструментами непрерывной интеграции"
-echo -e " - Создание и выполнение тестовых сценариев"
-echo -e " - Поддержка WebSocket для работы с API реального времени\n" 
+echo -e "\033[1;33mPlanned features:\033[0m"
+echo -e " - Parallel requests for performance improvement"
+echo -e " - Interactive mode with request history"
+echo -e " - Integration with continuous integration tools"
+echo -e " - Creating and executing test scenarios"
+echo -e " - WebSocket support for API real-time\n" 
