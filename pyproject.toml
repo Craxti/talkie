@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "talkie"
-version = "0.1.1"
+version = "0.1.2"
 description = "A command line HTTP client that is easy to use"
 readme = "README.md"
 requires-python = ">=3.8"
