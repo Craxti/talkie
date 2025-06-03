@@ -1,0 +1,1 @@
+"""Talkie application core.""" 
