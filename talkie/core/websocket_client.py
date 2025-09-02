@@ -7,6 +7,7 @@ sending and receiving messages, and subscribing to events.
 
 import json
 import asyncio
+import ssl
 from typing import Dict, Any, Optional, Callable, List, Union, AsyncGenerator
 import websockets
 from pydantic import BaseModel
@@ -63,6 +64,10 @@ class WebSocketClient:
         auto_reconnect: bool = True,
         max_reconnect_attempts: int = 5,
         reconnect_interval: float = 1.0,
+        ssl_context: Optional[ssl.SSLContext] = None,
+        cert_file: Optional[str] = None,
+        key_file: Optional[str] = None,
+        timeout: float = 10.0,
     ):
         """
         Initialize WebSocket client.
@@ -79,6 +84,17 @@ class WebSocketClient:
         self.auto_reconnect = auto_reconnect
         self.max_reconnect_attempts = max_reconnect_attempts
         self.reconnect_interval = reconnect_interval
+        self.timeout = timeout
+        
+        # SSL configuration
+        self.ssl_context = ssl_context
+        if cert_file or key_file:
+            self.ssl_context = ssl.create_default_context()
+            if cert_file and key_file:
+                self.ssl_context.load_cert_chain(cert_file, key_file)
+            elif cert_file:
+                self.ssl_context.load_cert_chain(cert_file)
+        
         self.connection = None
         self.is_connected = False
         self._event_handlers: Dict[str, List[Callable]] = {}
@@ -97,10 +113,20 @@ class WebSocketClient:
         """
         try:
             logger.info(f"Connecting to {self.uri}")
-            self.connection = await websockets.connect(
-                self.uri, 
-                extra_headers=self.headers
-            )
+            
+            # Prepare connection parameters
+            connect_kwargs = {
+                'uri': self.uri,
+                'extra_headers': self.headers,
+                'ping_timeout': self.timeout,
+                'close_timeout': self.timeout,
+            }
+            
+            # Add SSL context if provided
+            if self.ssl_context:
+                connect_kwargs['ssl'] = self.ssl_context
+            
+            self.connection = await websockets.connect(**connect_kwargs)
             self.is_connected = True
             
             # Start background task for listening to incoming messages

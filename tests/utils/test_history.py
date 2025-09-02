@@ -233,7 +233,7 @@ def test_json_serialization(history, sample_record):
     # Проверяем, что запись может быть сериализована
     try:
         json_str = json.dumps(
-            sample_record.dict(),
+            sample_record.model_dump(),
             default=history._json_serializer
         )
         assert isinstance(json_str, str)

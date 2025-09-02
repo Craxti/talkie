@@ -41,27 +41,27 @@ class OpenApiInspector:
         Raises:
             ValueError: If unable to load specification
         """
-        parsed_url = urlparse(spec_url)
-
-        # Load from local file
-        if not parsed_url.scheme or parsed_url.scheme == "file":
-            file_path = parsed_url.path if parsed_url.scheme == "file" else spec_url
+        # Check if it's a URL or local file
+        if spec_url.startswith(('http://', 'https://')):
+            # Load from URL
             try:
-                with open(os.path.expanduser(file_path), "r") as f:
+                response = self.client.get(spec_url)
+                response.raise_for_status()
+                return self._parse_spec_content(response.text, spec_url)
+            except Exception as e:
+                logger.error(f"Error loading specification from URL: {str(e)}")
+                raise ValueError(f"Unable to load specification from URL: {str(e)}")
+        else:
+            # Load from local file
+            try:
+                with open(os.path.expanduser(spec_url), "r", encoding="utf-8") as f:
                     content = f.read()
-                    return self._parse_spec_content(content, file_path)
+                    return self._parse_spec_content(content, spec_url)
             except Exception as e:
                 logger.error(f"Error reading specification file: {str(e)}")
                 raise ValueError(f"Unable to load specification from file: {str(e)}")
 
-        # Load from URL
-        try:
-            response = self.client.get(spec_url)
-            response.raise_for_status()
-            return self._parse_spec_content(response.text, spec_url)
-        except Exception as e:
-            logger.error(f"Error loading specification from URL: {str(e)}")
-            raise ValueError(f"Unable to load specification from URL: {str(e)}")
+
 
     def _parse_spec_content(self, content: str, source: str) -> Dict[str, Any]:
         """Parse specification content.

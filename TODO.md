@@ -1,17 +1,17 @@
 # Talkie Project TODO List
 
 ## High Priority
-- [ ] Add comprehensive error handling for HTTP requests
-- [ ] Implement request timeout configuration
-- [ ] Add support for client certificates
-- [ ] Improve test coverage for edge cases
-- [ ] Add input validation for command line arguments
+- [x] Add comprehensive error handling for HTTP requests
+- [x] Implement request timeout configuration
+- [x] Add support for client certificates
+- [x] Improve test coverage for edge cases
+- [x] Add input validation for command line arguments
 
 ## Features
-- [ ] Add support for GraphQL requests
-- [ ] Implement request/response caching
-- [ ] Add support for WebSocket connections
-- [ ] Create command for generating OpenAPI client code
+- [x] Add support for GraphQL requests
+- [x] Implement request/response caching
+- [x] Add support for WebSocket connections
+- [x] Create command for generating OpenAPI client code
 - [ ] Add support for gRPC requests
 
 ## Documentation
@@ -22,21 +22,21 @@
 - [ ] Add architecture diagrams
 
 ## Testing & Quality
-- [ ] Add integration tests
-- [ ] Implement performance benchmarks
+- [x] Add integration tests
+- [x] Implement performance benchmarks
 - [ ] Add stress testing
 - [ ] Set up continuous performance monitoring
 - [ ] Add security testing
 
 ## Developer Experience
 - [ ] Create development environment setup guide
-- [ ] Improve debug logging
+- [x] Improve debug logging
 - [ ] Add development tools documentation
 - [ ] Create contribution templates
 - [ ] Add pre-commit hooks
 
 ## Cross-platform
-- [ ] Test and fix Windows-specific issues
+- [x] Test and fix Windows-specific issues
 - [ ] Ensure proper file path handling across OS
 - [ ] Verify terminal color support on different platforms
 - [ ] Test on different Python versions (3.8+)

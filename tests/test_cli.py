@@ -8,6 +8,16 @@ runner = CliRunner()
 @pytest.fixture
 def mock_http_response(monkeypatch):
     """Мок для HTTP-ответов в тестах CLI."""
+    class MockURL:
+        def __init__(self):
+            self.params = {}
+    
+    class MockRequest:
+        def __init__(self):
+            self.method = "GET"
+            self.headers = {"User-Agent": "talkie/0.1.2"}
+            self.url = MockURL()
+    
     class MockResponse:
         def __init__(self, status_code=200, content=None, headers=None):
             self.status_code = status_code
@@ -16,6 +26,8 @@ def mock_http_response(monkeypatch):
             self.reason_phrase = "OK" if status_code == 200 else "Error"
             from datetime import timedelta
             self.elapsed = timedelta(milliseconds=100)
+            self.request = MockRequest()
+            self.url = "https://example.com/api"
             
         @property
         def content(self):

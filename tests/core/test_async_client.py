@@ -138,10 +138,10 @@ async def test_async_client_execute_batch_with_errors():
 async def test_async_client_execute_from_file():
     """Тест выполнения запросов из файла."""
     # Создаем временный файл с запросами
-    with tempfile.NamedTemporaryFile(mode="w", delete=False) as temp:
+    with tempfile.NamedTemporaryFile(mode="w", delete=False, encoding="utf-8") as temp:
         temp.write("GET https://example.com/api/users/1\n")
         temp.write("GET https://example.com/api/users/2\n")
-        temp.write("# Комментарий\n")
+        temp.write("# Comment\n")
         temp.write("GET https://example.com/api/users/3\n")
         temp.write("INVALID LINE\n")  # Некорректная строка
         temp.write("GET https://example.com/api/users/4\n")
