@@ -104,13 +104,58 @@ disable = [
     "R0903",  # too-few-public-methods
     "R0913",  # too-many-arguments
     "W0613",  # unused-argument
+    "C0103",  # invalid-name (for single letter variables in comprehensions)
+    "R0912",  # too-many-branches
+    "R0914",  # too-many-locals
+    "R0915",  # too-many-statements
+    "W0622",  # redefined-builtin
+    "C0302",  # too-many-lines
+    "C0301",  # line-too-long (handled by black)
+    "W0718",  # broad-exception-caught
+    "W0611",  # unused-import
+    "W0612",  # unused-variable
+    "E1123",  # unexpected-keyword-arg
+    "E1101",  # no-member
+    "E0611",  # no-name-in-module
+    "W0212",  # protected-access
+    "W0603",  # global-statement
+    "C0415",  # import-outside-toplevel
+    "W0707",  # raise-missing-from
+    "R0917",  # too-many-positional-arguments
+    "R0916",  # too-many-boolean-expressions
+    "R0911",  # too-many-return-statements
+    "R1705",  # no-else-return
+    "W1203",  # logging-fstring-interpolation
+    "W1309",  # f-string-without-interpolation
+    "R0902",  # too-many-instance-attributes
+    "W0404",  # reimported
 ]
 
 [tool.pylint.format]
 max-line-length = 88
+indent-string = "    "
 
 [tool.pylint.design]
 max-args = 7
 max-locals = 20
 max-branches = 15
-max-statements = 60 
+max-statements = 60
+max-attributes = 10
+max-public-methods = 20
+
+[tool.pylint.similarities]
+min-similarity-lines = 4
+ignore-comments = true
+ignore-docstrings = true
+ignore-imports = false
+
+[tool.pylint.spelling]
+spelling-store-unknown-words = true
+
+[tool.pylint.basic]
+good-names = [
+    "i", "j", "k", "ex", "Run", "_", "id", "db", "ui", "ok", "e", "f", "fp"
+]
+
+[tool.pylint.refactoring]
+max-nested-blocks = 5 

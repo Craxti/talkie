@@ -277,11 +277,11 @@ class DataFormatter:
         """
         if colorize:
             try:
-                from pygments import highlight
+                from pygments import highlight as pygments_highlight
                 from pygments.lexers import SqlLexer
                 from pygments.formatters import TerminalFormatter
 
-                return highlight(data, SqlLexer(), TerminalFormatter())
+                return pygments_highlight(data, SqlLexer(), TerminalFormatter())
             except Exception:
                 pass
 

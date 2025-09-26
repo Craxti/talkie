@@ -4,10 +4,9 @@ import os
 import json
 import hashlib
 import time
-from typing import Any, Dict, Optional, Union, Tuple
+from typing import Any, Dict, Optional
 from pathlib import Path
 from dataclasses import dataclass, asdict
-from datetime import datetime, timedelta
 
 import httpx
 from pydantic import BaseModel, Field
@@ -30,6 +29,16 @@ class CacheEntry:
     def is_expired(self) -> bool:
         """Check if cache entry is expired."""
         return time.time() > self.expires_at
+
+
+@dataclass
+class CacheKeyData:
+    """Data structure for cache key generation."""
+    method: str
+    url: str
+    headers: Optional[Dict[str, str]] = None
+    params: Optional[Dict[str, Any]] = None
+    body: Optional[str] = None
 
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary for JSON serialization."""
@@ -94,47 +103,36 @@ class ResponseCache:
         except IOError:
             pass  # Ignore write errors
 
-    def _generate_cache_key(
-        self,
-        method: str,
-        url: str,
-        headers: Optional[Dict[str, str]] = None,
-        params: Optional[Dict[str, Any]] = None,
-        body: Optional[str] = None
-    ) -> str:
+    def _generate_cache_key(self, key_data: CacheKeyData) -> str:
         """
         Generate cache key for request.
 
         Args:
-            method: HTTP method
-            url: Request URL
-            headers: Request headers (only Authorization is considered)
-            params: Query parameters
-            body: Request body
+            key_data: Cache key data structure
 
         Returns:
             Cache key string
         """
         # Normalize inputs
-        method = method.upper()
-        url = url.lower()
+        method = key_data.method.upper()
+        url = key_data.url.lower()
 
         # Only include Authorization header in cache key
         auth_header = {}
-        if headers and 'Authorization' in headers:
-            auth_header['Authorization'] = headers['Authorization']
+        if key_data.headers and 'Authorization' in key_data.headers:
+            auth_header['Authorization'] = key_data.headers['Authorization']
 
         # Create cache key components
-        key_data = {
+        key_components = {
             'method': method,
             'url': url,
             'headers': auth_header,
-            'params': params or {},
-            'body': body or ''
+            'params': key_data.params or {},
+            'body': key_data.body or ''
         }
 
         # Generate hash
-        key_string = json.dumps(key_data, sort_keys=True, ensure_ascii=False)
+        key_string = json.dumps(key_components, sort_keys=True, ensure_ascii=False)
         return hashlib.md5(key_string.encode('utf-8')).hexdigest()
 
     def _should_cache_request(
@@ -159,23 +157,23 @@ class ResponseCache:
 
         method = method.upper()
 
-        # Check method-specific caching rules
-        if method == 'GET':
-            return self.config.cache_get
-        elif method == 'POST':
-            # For POST, check if it's a GraphQL query
+        # Method-specific caching rules
+        cache_rules = {
+            'GET': self.config.cache_get,
+            'PUT': self.config.cache_put,
+            'DELETE': self.config.cache_delete
+        }
+
+        # Handle POST requests with special GraphQL logic
+        if method == 'POST':
             if (self.config.cache_graphql and
                 headers and
                 headers.get('Content-Type', '').startswith('application/json') and
                 body and 'query' in body and 'mutation' not in body.lower()):
                 return True
             return self.config.cache_post
-        elif method == 'PUT':
-            return self.config.cache_put
-        elif method == 'DELETE':
-            return self.config.cache_delete
 
-        return False
+        return cache_rules.get(method, False)
 
     def get_cached_response(
         self,
@@ -201,7 +199,8 @@ class ResponseCache:
         if not self._should_cache_request(method, headers, body):
             return None
 
-        cache_key = self._generate_cache_key(method, url, headers, params, body)
+        key_data = CacheKeyData(method=method, url=url, headers=headers, params=params, body=body)
+        cache_key = self._generate_cache_key(key_data)
 
         # Check if entry exists in index
         if cache_key not in self.index:
@@ -302,7 +301,8 @@ class ResponseCache:
             expires_at=now + ttl
         )
 
-        cache_key = self._generate_cache_key(method, url, headers, params, body)
+        key_data = CacheKeyData(method=method, url=url, headers=headers, params=params, body=body)
+        cache_key = self._generate_cache_key(key_data)
         cache_file = self.cache_dir / f"{cache_key}.json"
 
         try:

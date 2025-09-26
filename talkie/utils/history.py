@@ -3,8 +3,18 @@
 import csv
 import json
 from datetime import datetime
-from typing import Dict, Any, List, Optional
+from typing import Dict, Any, List, Optional, NamedTuple
 from pathlib import Path
+
+
+class RequestData(NamedTuple):
+    """Data structure for request information."""
+    method: str
+    url: str
+    headers: Optional[Dict[str, str]] = None
+    data: Optional[Any] = None
+    response_status: Optional[int] = None
+    response_time: Optional[float] = None
 
 
 class HistoryManager:
@@ -44,33 +54,20 @@ class HistoryManager:
         except IOError:
             pass  # If we can't save, continue without error
 
-    def add_request(
-        self,
-        method: str,
-        url: str,
-        headers: Optional[Dict[str, str]] = None,
-        data: Optional[Any] = None,
-        response_status: Optional[int] = None,
-        response_time: Optional[float] = None
-    ) -> None:
+    def add_request(self, request_data: RequestData) -> None:
         """Add request to history.
 
         Args:
-            method: HTTP method
-            url: Request URL
-            headers: Request headers
-            data: Request data
-            response_status: Response status code
-            response_time: Response time in seconds
+            request_data: Request data structure
         """
         entry = {
             "timestamp": datetime.now().isoformat(),
-            "method": method,
-            "url": url,
-            "headers": headers or {},
-            "data": data,
-            "response_status": response_status,
-            "response_time": response_time
+            "method": request_data.method,
+            "url": request_data.url,
+            "headers": request_data.headers or {},
+            "data": request_data.data,
+            "response_status": request_data.response_status,
+            "response_time": request_data.response_time
         }
 
         self.history.append(entry)
@@ -228,7 +225,15 @@ def add_to_history(
         response_time: Response time in seconds
     """
     manager = get_history_manager()
-    manager.add_request(method, url, headers, data, response_status, response_time)
+    request_data = RequestData(
+        method=method,
+        url=url,
+        headers=headers,
+        data=data,
+        response_status=response_status,
+        response_time=response_time
+    )
+    manager.add_request(request_data)
 
 
 def get_recent_requests(limit: int = 10) -> List[Dict[str, Any]]:
