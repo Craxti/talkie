@@ -13,7 +13,9 @@ class Environment(BaseModel):
 
     name: str = Field(..., description="Имя окружения")
     base_url: Optional[str] = Field(None, description="Базовый URL для запросов")
-    default_headers: Dict[str, str] = Field(default_factory=dict, description="Заголовки по умолчанию")
+    default_headers: Dict[str, str] = Field(
+        default_factory=dict, description="Заголовки по умолчанию"
+    )
     auth: Optional[Dict[str, str]] = Field(None, description="Данные аутентификации")
 
 
@@ -50,7 +52,7 @@ class Config(BaseModel):
                 config_data = json.load(f)
 
             return cls(**config_data)
-        except Exception:
+        except (FileNotFoundError, json.JSONDecodeError, ValueError):
             # Return default configuration in case of error
             return cls()
 
@@ -71,7 +73,8 @@ class Config(BaseModel):
         if not self.active_environment:
             return None
 
-        return self.environments.get(self.active_environment)
+        env_dict = dict(self.environments)
+        return env_dict.get(self.active_environment)
 
     @staticmethod
     def _get_config_path() -> Path:
@@ -113,4 +116,9 @@ def save_config(config: Config) -> None:
 
 def get_config_path() -> Path:
     """Get configuration file path."""
-    return Config._get_config_path()
+    # Определяем путь к конфигурационному файлу
+    config_dir = os.environ.get(
+        "TALKIE_CONFIG_DIR",
+        os.path.expanduser("~/.talkie")
+    )
+    return Path(config_dir) / "config.json"

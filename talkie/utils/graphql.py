@@ -1,7 +1,7 @@
 """Module for GraphQL operations and utilities."""
 
 import json
-from typing import Dict, Any, Optional, List, Union
+from typing import Dict, Any, Optional, List
 from dataclasses import dataclass
 
 
@@ -47,7 +47,7 @@ class GraphQLClient:
             "query": query,
             "variables": variables or {},
         }
-        
+
         if operation_name:
             payload["operationName"] = operation_name
 
@@ -78,7 +78,7 @@ class GraphQLClient:
             "query": mutation,
             "variables": variables or {},
         }
-        
+
         if operation_name:
             payload["operationName"] = operation_name
 
@@ -106,11 +106,11 @@ def build_graphql_query(
         str: GraphQL query string
     """
     query_parts = []
-    
+
     # Add fields
     field_selection = " ".join(fields)
     query_parts.append(f"query {{ {field_selection} }}")
-    
+
     # Add filters if provided
     if filters:
         filter_vars = []
@@ -119,10 +119,10 @@ def build_graphql_query(
                 filter_vars.append(f'{key}: "{value}"')
             else:
                 filter_vars.append(f"{key}: {value}")
-        
+
         if filter_vars:
             query_parts.append(f"where: {{ {', '.join(filter_vars)} }}")
-    
+
     # Add pagination if provided
     if pagination:
         pagination_vars = []
@@ -130,10 +130,10 @@ def build_graphql_query(
             pagination_vars.append(f"limit: {pagination['limit']}")
         if "offset" in pagination:
             pagination_vars.append(f"offset: {pagination['offset']}")
-        
+
         if pagination_vars:
             query_parts.append(f"pagination: {{ {', '.join(pagination_vars)} }}")
-    
+
     return " ".join(query_parts)
 
 
@@ -168,11 +168,12 @@ def build_graphql_mutation(
             input_vars.append(f"{key}: {{ {', '.join(nested_vars)} }}")
         else:
             input_vars.append(f"{key}: {value}")
-    
+
     input_string = ", ".join(input_vars)
     return_fields_string = " ".join(return_fields)
-    
-    return f"mutation {{ {operation}(input: {{ {input_string} }}) {{ {return_fields_string} }} }}"
+
+    return (f"mutation {{ {operation}(input: {{ {input_string} }}) "
+            f"{{ {return_fields_string} }} }}")
 
 
 def parse_graphql_response(response_text: str) -> GraphQLResponse:
@@ -210,12 +211,12 @@ def validate_graphql_query(query: str) -> bool:
     # Basic validation - check for required GraphQL keywords
     required_keywords = ["query", "mutation", "subscription"]
     query_lower = query.lower().strip()
-    
+
     # Check if query starts with a valid operation type
     for keyword in required_keywords:
         if query_lower.startswith(keyword):
             return True
-    
+
     return False
 
 
@@ -270,28 +271,7 @@ def introspect_schema(endpoint: str) -> Dict[str, Any]:
     Returns:
         Dict[str, Any]: Schema introspection data
     """
-    introspection_query = """
-    query IntrospectionQuery {
-        __schema {
-            queryType { name }
-            mutationType { name }
-            subscriptionType { name }
-            types {
-                ...TypeRef
-            }
-            directives {
-                name
-                description
-                locations
-                args {
-                    ...InputValue
-                }
-            }
-        }
-    }
-    """ + get_type_ref_fragment() + get_input_value_fragment()
-
-    # In a real implementation, this would make an HTTP request
+    # In a real implementation, this would make an HTTP request with introspection query
     # For now, return mock introspection data
     return {
         "__schema": {

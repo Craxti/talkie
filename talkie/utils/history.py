@@ -1,7 +1,7 @@
 """Module for managing request history."""
 
+import csv
 import json
-import os
 from datetime import datetime
 from typing import Dict, Any, List, Optional
 from pathlib import Path
@@ -23,7 +23,7 @@ class HistoryManager:
             history_dir = Path.home() / ".talkie"
             history_dir.mkdir(exist_ok=True)
             self.history_file = history_dir / "history.json"
-        
+
         self.history: List[Dict[str, Any]] = []
         self.load_history()
 
@@ -72,13 +72,13 @@ class HistoryManager:
             "response_status": response_status,
             "response_time": response_time
         }
-        
+
         self.history.append(entry)
-        
+
         # Keep only last 1000 entries
         if len(self.history) > 1000:
             self.history = self.history[-1000:]
-        
+
         self.save_history()
 
     def get_history(self, limit: Optional[int] = None) -> List[Dict[str, Any]]:
@@ -111,22 +111,22 @@ class HistoryManager:
             List[Dict[str, Any]]: Matching history entries
         """
         results = []
-        
+
         for entry in self.history:
             match = True
-            
+
             if method and entry.get("method") != method:
                 match = False
-            
+
             if url_pattern and url_pattern not in entry.get("url", ""):
                 match = False
-            
+
             if status_code and entry.get("response_status") != status_code:
                 match = False
-            
+
             if match:
                 results.append(entry)
-        
+
         return results
 
     def clear_history(self) -> None:
@@ -134,18 +134,17 @@ class HistoryManager:
         self.history = []
         self.save_history()
 
-    def export_history(self, output_file: str, format: str = "json") -> None:
+    def export_history(self, output_file: str, export_format: str = "json") -> None:
         """Export history to file.
 
         Args:
             output_file: Output file path
             format: Export format (json, csv)
         """
-        if format == "json":
+        if export_format == "json":
             with open(output_file, 'w', encoding='utf-8') as f:
                 json.dump(self.history, f, indent=2, ensure_ascii=False)
-        elif format == "csv":
-            import csv
+        elif export_format == "csv":
             with open(output_file, 'w', newline='', encoding='utf-8') as f:
                 if self.history:
                     writer = csv.DictWriter(f, fieldnames=self.history[0].keys())
@@ -160,30 +159,30 @@ class HistoryManager:
         """
         if not self.history:
             return {}
-        
+
         methods = {}
         status_codes = {}
         total_time = 0
         response_times = []
-        
+
         for entry in self.history:
             # Count methods
             method = entry.get("method", "UNKNOWN")
             methods[method] = methods.get(method, 0) + 1
-            
+
             # Count status codes
             status = entry.get("response_status")
             if status:
                 status_codes[status] = status_codes.get(status, 0) + 1
-            
+
             # Collect response times
             response_time = entry.get("response_time")
             if response_time:
                 response_times.append(response_time)
                 total_time += response_time
-        
+
         avg_response_time = total_time / len(response_times) if response_times else 0
-        
+
         return {
             "total_requests": len(self.history),
             "methods": methods,
@@ -195,7 +194,7 @@ class HistoryManager:
 
 
 # Global history manager instance
-_history_manager = None
+_HISTORY_MANAGER = None
 
 
 def get_history_manager() -> HistoryManager:
@@ -204,10 +203,10 @@ def get_history_manager() -> HistoryManager:
     Returns:
         HistoryManager: Global history manager
     """
-    global _history_manager
-    if _history_manager is None:
-        _history_manager = HistoryManager()
-    return _history_manager
+    global _HISTORY_MANAGER
+    if _HISTORY_MANAGER is None:
+        _HISTORY_MANAGER = HistoryManager()
+    return _HISTORY_MANAGER
 
 
 def add_to_history(

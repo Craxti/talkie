@@ -19,7 +19,7 @@ class OpenAPIClient:
             self.spec = self._load_spec(spec)
         else:
             self.spec = spec
-        
+
         self.base_url = self._get_base_url()
         self.paths = self.spec.get("paths", {})
         self.operations = self._extract_operations()
@@ -65,7 +65,7 @@ class OpenAPIClient:
             List[Dict[str, Any]]: List of operations
         """
         operations = []
-        
+
         for path, path_item in self.paths.items():
             for method, operation in path_item.items():
                 if method.upper() in ["GET", "POST", "PUT", "DELETE", "PATCH", "HEAD", "OPTIONS"]:
@@ -74,7 +74,7 @@ class OpenAPIClient:
                         "method": method.upper(),
                         "operation": operation
                     })
-        
+
         return operations
 
     def get_operation(self, path: str, method: str) -> Optional[Dict[str, Any]]:
@@ -102,12 +102,12 @@ class OpenAPIClient:
             List[Dict[str, Any]]: Operations with tag
         """
         tagged_operations = []
-        
+
         for operation in self.operations:
             op_tags = operation.get("operation", {}).get("tags", [])
             if tag in op_tags:
                 tagged_operations.append(operation)
-        
+
         return tagged_operations
 
     def generate_request_example(
@@ -129,7 +129,7 @@ class OpenAPIClient:
         operation = self.get_operation(path, method)
         if not operation:
             return {}
-        
+
         example = {
             "method": method.upper(),
             "url": urljoin(self.base_url, path),
@@ -137,7 +137,7 @@ class OpenAPIClient:
                 "Content-Type": "application/json"
             }
         }
-        
+
         # Add parameters
         if parameters:
             if method.upper() in ["GET", "DELETE"]:
@@ -146,7 +146,7 @@ class OpenAPIClient:
             else:
                 # Add as request body
                 example["data"] = parameters
-        
+
         return example
 
     def validate_request(
@@ -167,11 +167,11 @@ class OpenAPIClient:
         """
         errors = []
         operation = self.get_operation(path, method)
-        
+
         if not operation:
             errors.append(f"Operation {method.upper()} {path} not found")
             return errors
-        
+
         # Check required parameters
         required_params = operation.get("parameters", [])
         for param in required_params:
@@ -179,7 +179,7 @@ class OpenAPIClient:
                 param_name = param.get("name")
                 if param_name and (not parameters or param_name not in parameters):
                     errors.append(f"Required parameter '{param_name}' missing")
-        
+
         return errors
 
     def get_schema(self, schema_name: str) -> Optional[Dict[str, Any]]:
@@ -213,11 +213,11 @@ class OpenAPIClient:
         """
         path_item = self.paths.get(path, {})
         methods = []
-        
+
         for method in ["get", "post", "put", "delete", "patch", "head", "options"]:
             if method in path_item:
                 methods.append(method.upper())
-        
+
         return methods
 
     def export_spec(self, output_file: str) -> None:
@@ -268,11 +268,11 @@ def validate_openapi_spec(spec: Dict[str, Any]) -> List[str]:
         List[str]: Validation errors
     """
     errors = []
-    
+
     # Check required fields
     if "openapi" not in spec:
         errors.append("Missing 'openapi' field")
-    
+
     if "info" not in spec:
         errors.append("Missing 'info' field")
     else:
@@ -281,10 +281,10 @@ def validate_openapi_spec(spec: Dict[str, Any]) -> List[str]:
             errors.append("Missing 'info.title' field")
         if "version" not in info:
             errors.append("Missing 'info.version' field")
-    
+
     if "paths" not in spec:
         errors.append("Missing 'paths' field")
-    
+
     return errors
 
 
@@ -327,7 +327,7 @@ def _generate_python_client(spec: Dict[str, Any]) -> str:
         "        return self.session.request(method, url, **kwargs)",
         ""
     ]
-    
+
     # Add methods for each operation
     paths = spec.get("paths", {})
     for path, path_item in paths.items():
@@ -337,5 +337,5 @@ def _generate_python_client(spec: Dict[str, Any]) -> str:
                 client_code.append(f"    def {operation_id}(self, **kwargs):")
                 client_code.append(f"        return self.request('{method.upper()}', '{path}', **kwargs)")
                 client_code.append("")
-    
+
     return "\n".join(client_code)

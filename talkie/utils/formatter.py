@@ -27,7 +27,8 @@ class DataFormatter:
         self.html_converter.ignore_tables = False
         self.html_converter.body_width = 0  # Don't limit text width
 
-    def format_json(self, data: Union[str, Dict[str, Any]], colorize: bool = True) -> str:
+    def format_json(self, data: Union[str, Dict[str, Any]],
+                   colorize: bool = True) -> str:
         """Format JSON data with indentation and highlighting.
 
         Args:
@@ -48,7 +49,9 @@ class DataFormatter:
             json_obj = data
 
         # Format JSON with indentation
-        formatted_json = json.dumps(json_obj, indent=2, ensure_ascii=False, sort_keys=True)
+        formatted_json = json.dumps(
+            json_obj, indent=2, ensure_ascii=False, sort_keys=True
+        )
 
         # Syntax highlighting
         if colorize:
@@ -84,7 +87,8 @@ class DataFormatter:
             # In case of error, return original string
             return data
 
-    def format_html(self, data: str, to_markdown: bool = False, colorize: bool = True) -> str:
+    def format_html(self, data: str, to_markdown: bool = False,
+                   colorize: bool = True) -> str:
         """Format HTML data with indentation and highlighting.
 
         Args:
@@ -158,9 +162,12 @@ class DataFormatter:
             data: Содержимое для отображения
             content_type: MIME-тип содержимого
         """
-        if content_type == "application/json" or (
-            data and data.strip().startswith(("{", "[")) and data.strip().endswith(("]", "}"))
-        ):
+        is_json = content_type == "application/json"
+        has_json_structure = (
+            data and data.strip().startswith(("{", "[")) and
+            data.strip().endswith(("]", "}"))
+        )
+        if is_json or has_json_structure:
             # JSON
             try:
                 json_obj = json.loads(data)
@@ -175,7 +182,7 @@ class DataFormatter:
                 # Не JSON, выводим как есть
                 self.console.print(data)
 
-        elif content_type in ["application/xml", "text/xml"] or (
+        if content_type in ["application/xml", "text/xml"] or (
             data and data.strip().startswith("<") and data.strip().endswith(">")
         ):
             # XML
@@ -186,7 +193,7 @@ class DataFormatter:
             except Exception:
                 self.console.print(data)
 
-        elif content_type == "text/html":
+        if content_type == "text/html":
             # HTML
             try:
                 formatted_html = self._format_html_tags(data)
@@ -199,7 +206,8 @@ class DataFormatter:
             # Другое содержимое
             self.console.print(data)
 
-    def format_data(self, data: str, content_type: str, format_type: Optional[str] = None) -> str:
+    def format_data(self, data: str, content_type: str,
+                   format_type: Optional[str] = None) -> str:
         """Автоматически форматировать данные в зависимости от типа.
 
         Args:
@@ -210,23 +218,28 @@ class DataFormatter:
         Returns:
             str: Отформатированные данные
         """
-        if format_type == "json" or content_type == "application/json" or (
-            data and data.strip().startswith(("{", "[")) and data.strip().endswith(("]", "}"))
-        ):
+        is_json_format = format_type == "json" or content_type == "application/json"
+        has_json_structure = (
+            data and data.strip().startswith(("{", "[")) and
+            data.strip().endswith(("]", "}"))
+        )
+        if is_json_format or has_json_structure:
             return self.format_json(data)
 
-        elif format_type == "xml" or content_type in ["application/xml", "text/xml"] or (
-            data and data.strip().startswith("<") and data.strip().endswith(">") and "?xml" in data
+        if (format_type == "xml" or
+              content_type in ["application/xml", "text/xml"] or
+            data and data.strip().startswith("<") and
+            data.strip().endswith(">") and "?xml" in data
         ):
             return self.format_xml(data)
 
-        elif (format_type == "html" or content_type == "text/html" or
+        if (format_type == "html" or content_type == "text/html" or
               (data and data.strip().startswith("<") and
                data.strip().endswith(">") and
                ("<html" in data or "</html>" in data))):
             return self.format_html(data)
 
-        elif format_type == "markdown" and content_type == "text/html":
+        if format_type == "markdown" and content_type == "text/html":
             return self.format_html(data, to_markdown=True)
 
         # Возвращаем данные как есть
@@ -267,11 +280,11 @@ class DataFormatter:
                 from pygments import highlight
                 from pygments.lexers import SqlLexer
                 from pygments.formatters import TerminalFormatter
-                
+
                 return highlight(data, SqlLexer(), TerminalFormatter())
             except Exception:
                 pass
-        
+
         return data
 
     def format_auto(self, data: str, colorize: bool = True) -> str:
@@ -287,23 +300,29 @@ class DataFormatter:
         # Try JSON first
         if data.strip().startswith(("{", "[")) and data.strip().endswith(("]", "}")):
             return self.format_json(data, colorize)
-        
+
         # Try XML
-        if data.strip().startswith("<") and data.strip().endswith(">") and "?xml" in data:
+        is_xml = (data.strip().startswith("<") and
+                  data.strip().endswith(">") and "?xml" in data)
+        if is_xml:
             return self.format_xml(data, colorize)
-        
+
         # Try HTML
-        if data.strip().startswith("<") and data.strip().endswith(">") and ("<html" in data or "</html>" in data):
+        is_html = (data.strip().startswith("<") and
+                   data.strip().endswith(">") and
+                   ("<html" in data or "</html>" in data))
+        if is_html:
             return self.format_html(data, colorize)
-        
+
         # Try YAML
         if ":" in data and "\n" in data and not data.strip().startswith("<"):
             return self.format_yaml(data, colorize)
-        
+
         # Try SQL
-        if any(keyword in data.upper() for keyword in ["SELECT", "INSERT", "UPDATE", "DELETE", "CREATE"]):
+        sql_keywords = ["SELECT", "INSERT", "UPDATE", "DELETE", "CREATE"]
+        if any(keyword in data.upper() for keyword in sql_keywords):
             return self.format_sql(data, colorize)
-        
+
         # Return as-is if no format detected
         return data
 
@@ -359,7 +378,8 @@ def detect_content_type(content: str) -> str:
     # Проверяем HTML
     if content.startswith("<") and content.endswith(">"):
         # Сначала проверяем HTML-специфичные теги
-        if re.search(r"<html.*?>|<body.*?>|<head.*?>|<!DOCTYPE\s+html.*?>", content, re.IGNORECASE):
+        html_pattern = r"<html.*?>|<body.*?>|<head.*?>|<!DOCTYPE\s+html.*?>"
+        if re.search(html_pattern, content, re.IGNORECASE):
             return "html"
         # Если не HTML, пробуем XML
         try:
@@ -402,9 +422,8 @@ def format_content(content: str, content_type: Optional[str] = None) -> str:
     # Форматируем в зависимости от типа
     if content_type == "json":
         return format_json(content)
-    elif content_type == "xml":
+    if content_type == "xml":
         return format_xml(content)
-    elif content_type == "html":
+    if content_type == "html":
         return format_html(content)
-    else:
-        return content
+    return content

@@ -1,7 +1,9 @@
 """Utility modules for Talkie."""
 
 from .config import Config, Environment
-from .formatter import DataFormatter, format_json, format_xml, format_html
+from .formatter import (
+    DataFormatter, format_json, format_xml, format_html
+)
 from .colors import get_status_color, get_content_type_color
 from .cache import ResponseCache, CacheConfig, CacheEntry
 from .logger import Logger
@@ -21,7 +23,7 @@ __all__ = [
     "Environment",
     "DataFormatter",
     "format_json",
-    "format_xml", 
+    "format_xml",
     "format_html",
     "get_status_color",
     "get_content_type_color",

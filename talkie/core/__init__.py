@@ -8,7 +8,7 @@ from .websocket_client import WebSocketClient, WebSocketMessage
 
 __all__ = [
     "HttpClient",
-    "AsyncHttpClient", 
+    "AsyncHttpClient",
     "RequestBuilder",
     "ResponseFormatter",
     "WebSocketClient",

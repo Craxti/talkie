@@ -75,11 +75,11 @@ def generate_curl_command(
         # Parse existing URL to get base
         parsed_url = urlparse(url)
         query_params = parse_qs(parsed_url.query)
-        
+
         # Add new parameters
         for key, value in params.items():
             query_params[key] = [value]
-        
+
         # Rebuild URL with parameters
         new_query = "&".join([f"{k}={v[0]}" for k, v in query_params.items()])
         if new_query:
@@ -182,7 +182,7 @@ def extract_curl_options(curl_command: str) -> Dict[str, Any]:
     i = 0
     while i < len(parts):
         part = parts[i]
-        
+
         if part.startswith("-"):
             if part == "-X":
                 options["method"] = parts[i + 1]
@@ -205,7 +205,7 @@ def extract_curl_options(curl_command: str) -> Dict[str, Any]:
                 options["verbose"] = True
             elif part.startswith("--max-time"):
                 options["timeout"] = int(part.split("=")[1])
-        
+
         i += 1
 
     return options

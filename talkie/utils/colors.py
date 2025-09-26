@@ -1,7 +1,5 @@
 """Модуль для работы с цветовыми схемами в Talkie."""
 
-from typing import Dict, Tuple
-
 # Стандартные цвета статусов
 STATUS_COLORS = {
     # Информационные (1xx)

@@ -83,11 +83,11 @@ def log_request(method: str, url: str, headers: dict, data: Optional[dict] = Non
         headers: Request headers
         data: Request data (for POST, PUT etc.)
     """
-    logger.info(f"Sending {method} request: {url}")
-    logger.debug(f"Request headers: {headers}")
+    logger.info("Sending %s request: %s", method, url)
+    logger.debug("Request headers: %s", headers)
 
     if data:
-        logger.debug(f"Request data: {data}")
+        logger.debug("Request data: %s", data)
 
 
 def log_response(status_code: int, headers: dict, body_size: int) -> None:
@@ -98,9 +98,9 @@ def log_response(status_code: int, headers: dict, body_size: int) -> None:
         headers: Response headers
         body_size: Response body size in bytes
     """
-    logger.info(f"Received response with status: {status_code}")
-    logger.debug(f"Response headers: {headers}")
-    logger.debug(f"Response body size: {body_size} bytes")
+    logger.info("Received response with status: %s", status_code)
+    logger.debug("Response headers: %s", headers)
+    logger.debug("Response body size: %s bytes", body_size)
 
 
 def log_error(message: str, exception: Optional[Exception] = None) -> None:
@@ -498,20 +498,3 @@ def get_logger():
     return logger
 
 
-def log_request(method: str, url: str, headers: Optional[Dict[str, str]] = None,
-                body: Optional[str] = None, params: Optional[Dict[str, Any]] = None):
-    """Log HTTP request."""
-    logger.info(f"Request: {method} {url}")
-
-
-def log_response(status_code: int, body: str, headers: Optional[Dict[str, str]] = None):
-    """Log HTTP response."""
-    logger.info(f"Response: {status_code} - {body[:100]}...")
-
-
-def log_error(error: Exception, message: Optional[str] = None, context: Optional[Dict[str, Any]] = None):
-    """Log error."""
-    if message:
-        logger.error(f"{message}: {error}")
-    else:
-        logger.error(f"Error: {error}")
