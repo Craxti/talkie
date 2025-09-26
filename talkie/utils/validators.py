@@ -7,7 +7,6 @@ from urllib.parse import urlparse
 
 class ValidationError(Exception):
     """Custom exception for validation errors."""
-    pass
 
 
 # Convenience functions for direct import
@@ -127,7 +126,8 @@ class InputValidator:
             match = param_pattern.match(param)
             if not match:
                 raise ValidationError(
-                    f"Invalid query parameter format: '{param}'. Expected format: 'key=value'"
+                    f"Invalid query parameter format: '{param}'. "
+                    f"Expected format: 'key=value'"
                 )
 
             key, value = match.groups()
@@ -187,7 +187,9 @@ class InputValidator:
                     else:
                         json_data[key] = value
                 except ValueError as e:
-                    raise ValidationError(f"Invalid JSON value '{value}' for key '{key}': {e}")
+                    raise ValidationError(
+                        f"Invalid JSON value '{value}' for key '{key}': {e}"
+                    )
                 continue
 
             # Check for form data format (key=value)
@@ -205,7 +207,8 @@ class InputValidator:
 
             # If neither pattern matches
             raise ValidationError(
-                f"Invalid data format: '{item}'. Expected format: 'key=value' or 'key:=value'"
+                f"Invalid data format: '{item}'. "
+                f"Expected format: 'key=value' or 'key:=value'"
             )
 
         return form_data, json_data

@@ -141,7 +141,8 @@ class ErrorHandler:
             return False
 
         # Retry network-related errors
-        if error_info.error_type in ['TimeoutException', 'ConnectError', 'NetworkError']:
+        network_errors = ['TimeoutException', 'ConnectError', 'NetworkError']
+        if error_info.error_type in network_errors:
             return error_info.retry_count < 3
 
         # Don't retry validation errors
@@ -175,17 +176,14 @@ class ErrorHandler:
 
 class ValidationError(Exception):
     """Custom validation error."""
-    pass
 
 
 class RetryableError(Exception):
     """Error that can be retried."""
-    pass
 
 
 class NonRetryableError(Exception):
     """Error that should not be retried."""
-    pass
 
 
 def validate_url(url: str) -> None:

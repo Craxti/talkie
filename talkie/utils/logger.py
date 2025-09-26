@@ -74,7 +74,8 @@ def get_default_log_file() -> str:
 
 
 # Request logs
-def log_request(method: str, url: str, headers: dict, data: Optional[dict] = None) -> None:
+def log_request(method: str, url: str, headers: dict,
+                data: Optional[dict] = None) -> None:
     """Log HTTP request.
 
     Args:
@@ -138,7 +139,8 @@ class Logger:
         """
         setup_logging(level, log_file, verbose)
 
-    def log_request(self, method: str, url: str, headers: dict, data: Optional[dict] = None) -> None:
+    def log_request(self, method: str, url: str, headers: dict,
+                   data: Optional[dict] = None) -> None:
         """Log HTTP request."""
         log_request(method, url, headers, data)
 
@@ -372,7 +374,7 @@ class StructuredLogger:
         """Log cache operations."""
         cache_data = {
             "operation": operation,
-            "cache_key": key[:50] + "..." if len(key) > 50 else key,  # Truncate long keys
+            "cache_key": (key[:50] + "..." if len(key) > 50 else key),
             "cache_hit": hit,
             "size_bytes": size,
             "event_type": "cache_operation"
@@ -416,7 +418,7 @@ class StructuredLogger:
 
     def export_logs(self, output_file: str, level: str = "INFO") -> int:
         """Export logs to file in structured format."""
-        level_num = getattr(logging, level.upper())
+        # level_num = getattr(logging, level.upper())  # Not used currently
         count = 0
 
         # This is a simplified export - in practice you'd read from log files
@@ -496,5 +498,3 @@ def setup_debug_logging(enable_debug: bool = True, log_file: Optional[str] = Non
 def get_logger():
     """Get logger instance."""
     return logger
-
-

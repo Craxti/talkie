@@ -68,7 +68,10 @@ class OpenAPIClient:
 
         for path, path_item in self.paths.items():
             for method, operation in path_item.items():
-                if method.upper() in ["GET", "POST", "PUT", "DELETE", "PATCH", "HEAD", "OPTIONS"]:
+                http_methods = [
+                    "GET", "POST", "PUT", "DELETE", "PATCH", "HEAD", "OPTIONS"
+                ]
+                if method.upper() in http_methods:
                     operations.append({
                         "path": path,
                         "method": method.upper(),
@@ -300,8 +303,7 @@ def generate_client_code(spec: Dict[str, Any], language: str = "python") -> str:
     """
     if language == "python":
         return _generate_python_client(spec)
-    else:
-        return f"Client generation for {language} not implemented"
+    return f"Client generation for {language} not implemented"
 
 
 def _generate_python_client(spec: Dict[str, Any]) -> str:
@@ -333,9 +335,17 @@ def _generate_python_client(spec: Dict[str, Any]) -> str:
     for path, path_item in paths.items():
         for method, operation in path_item.items():
             if method.upper() in ["GET", "POST", "PUT", "DELETE", "PATCH"]:
-                operation_id = operation.get("operationId", f"{method}_{path.replace('/', '_')}")
-                client_code.append(f"    def {operation_id}(self, **kwargs):")
-                client_code.append(f"        return self.request('{method.upper()}', '{path}', **kwargs)")
+                operation_id = operation.get(
+                    "operationId", f"{method}_{path.replace('/', '_')}"
+                )
+                client_code.append(
+                    f"    def {operation_id}(self, **kwargs):"
+                )
+                request_line = (
+                    f"        return self.request('{method.upper()}', "
+                    f"'{path}', **kwargs)"
+                )
+                client_code.append(request_line)
                 client_code.append("")
 
     return "\n".join(client_code)

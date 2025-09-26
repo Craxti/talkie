@@ -11,7 +11,8 @@ from .error_handler import ErrorHandler
 from .validators import validate_url, validate_json
 from .memory_manager import MemoryManager
 from .performance_config import PerformanceConfig
-# from .benchmarks import benchmark_request, benchmark_requests  # Functions not implemented yet
+# from .benchmarks import benchmark_request, benchmark_requests
+# Functions not implemented yet
 from .curl_generator import generate_curl_command
 from .graphql import GraphQLClient, GraphQLResponse
 from .history import HistoryManager
