@@ -117,7 +117,7 @@ class OpenApiInspector:
         description = info.get("description", "No description")
 
         # Display information
-        self.console.print(Panel(f"[bold]{title}[/bold] [dim]v{version}[/dim]", 
+        self.console.print(Panel(f"[bold]{title}[/bold] [dim]v{version}[/dim]",
                                 subtitle=description[:100] + ("..." if len(description) > 100 else "")))
 
         # Servers
@@ -137,7 +137,7 @@ class OpenApiInspector:
             return
 
         paths = spec["paths"]
-        
+
         # Create table for endpoints
         table = Table(title="Available Endpoints")
         table.add_column("Path", style="cyan")
@@ -226,31 +226,31 @@ class OpenApiInspector:
             # Загружаем и проверяем спецификацию
             self.console.print(f"[bold]Загрузка спецификации OpenAPI из:[/bold] {spec_url}")
             spec = self.load_spec(spec_url)
-            
+
             is_valid, error = self.validate_spec(spec)
             if not is_valid:
                 self.console.print(f"[yellow]Предупреждение:[/yellow] Спецификация содержит ошибки: {error}")
             else:
                 self.console.print("[green]Спецификация валидна.[/green]")
-            
+
             # Отображаем информацию
             self.console.print("\n[bold]Информация об API:[/bold]")
             self.display_api_info(spec)
-            
+
             # Отображаем эндпоинты
             if show_endpoints:
                 self.console.print("\n[bold]Эндпоинты:[/bold]")
                 self.display_endpoints(spec)
-                
+
                 # Пример запроса для первого эндпоинта
                 if "paths" in spec and spec["paths"]:
                     path = next(iter(spec["paths"]))
                     method = next((m for m in spec["paths"][path] if m.lower() in ["get", "post", "put", "delete"]), "get")
-                    
+
                     self.console.print("\n[bold]Пример запроса:[/bold]")
                     sample = self.generate_sample_request(spec, path, method)
                     self.console.print(Syntax(sample, "bash", theme="monokai"))
-        
+
         except Exception as e:
             self.console.print(f"[bold red]Ошибка при инспекции API:[/bold red] {str(e)}")
             logger.error(f"Ошибка при инспекции API: {str(e)}")
@@ -296,18 +296,18 @@ def inspect_api(spec_url: str, show_endpoints: bool = True) -> None:
 
 def extract_endpoints(spec: Dict[str, Any]) -> List[Dict[str, Any]]:
     """Извлечь список всех конечных точек из спецификации.
-    
+
     Args:
         spec: Спецификация OpenAPI
-        
+
     Returns:
         List[Dict[str, Any]]: Список эндпоинтов с их деталями
     """
     endpoints = []
-    
+
     if "paths" not in spec:
         return endpoints
-    
+
     for path, methods in spec["paths"].items():
         for method, details in methods.items():
             if method.lower() in ["get", "post", "put", "delete", "patch", "options", "head"]:
@@ -321,36 +321,36 @@ def extract_endpoints(spec: Dict[str, Any]) -> List[Dict[str, Any]]:
                     "responses": details.get("responses", {}),
                 }
                 endpoints.append(endpoint)
-    
+
     return endpoints
 
 def extract_endpoint_details(spec: Dict[str, Any], path: str, method: str) -> Dict[str, Any]:
     """Извлечь детальную информацию о конкретном эндпоинте.
-    
+
     Args:
         spec: Спецификация OpenAPI
         path: Путь эндпоинта
         method: HTTP-метод
-        
+
     Returns:
         Dict[str, Any]: Детали эндпоинта
     """
     if "paths" not in spec or path not in spec["paths"]:
         raise ValueError(f"Путь {path} не найден в спецификации")
-    
+
     if method.lower() not in spec["paths"][path]:
         raise ValueError(f"Метод {method} не найден для пути {path}")
-    
+
     return spec["paths"][path][method.lower()]
 
 def format_openapi_spec(spec: Dict[str, Any]) -> str:
     """Форматировать спецификацию OpenAPI для вывода.
-    
+
     Args:
         spec: Спецификация OpenAPI
-        
+
     Returns:
         str: Отформатированная спецификация
     """
     # Форматируем как YAML для лучшей читаемости
-    return yaml.dump(spec, allow_unicode=True, sort_keys=False) 
+    return yaml.dump(spec, allow_unicode=True, sort_keys=False)

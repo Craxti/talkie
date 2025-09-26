@@ -174,7 +174,7 @@ class DataFormatter:
             except json.JSONDecodeError:
                 # Не JSON, выводим как есть
                 self.console.print(data)
-        
+
         elif content_type in ["application/xml", "text/xml"] or (
             data and data.strip().startswith("<") and data.strip().endswith(">")
         ):
@@ -185,7 +185,7 @@ class DataFormatter:
                 self.console.print(syntax)
             except Exception:
                 self.console.print(data)
-        
+
         elif content_type == "text/html":
             # HTML
             try:
@@ -194,7 +194,7 @@ class DataFormatter:
                 self.console.print(syntax)
             except Exception:
                 self.console.print(data)
-        
+
         else:
             # Другое содержимое
             self.console.print(data)
@@ -214,22 +214,22 @@ class DataFormatter:
             data and data.strip().startswith(("{", "[")) and data.strip().endswith(("]", "}"))
         ):
             return self.format_json(data)
-        
+
         elif format_type == "xml" or content_type in ["application/xml", "text/xml"] or (
             data and data.strip().startswith("<") and data.strip().endswith(">") and "?xml" in data
         ):
             return self.format_xml(data)
-        
+
         elif format_type == "html" or content_type == "text/html" or (
             data and data.strip().startswith("<") and data.strip().endswith(">") and ("<html" in data or "</html>" in data)
         ):
             return self.format_html(data)
-        
+
         elif format_type == "markdown" and content_type == "text/html":
             return self.format_html(data, to_markdown=True)
-        
+
         # Возвращаем данные как есть
-        return data 
+        return data
 
 # Создаем глобальный экземпляр форматтера
 _formatter = DataFormatter()
@@ -256,15 +256,15 @@ def format_data(data: str, content_type: str, format_type: Optional[str] = None)
 
 def detect_content_type(content: str) -> str:
     """Определить тип контента на основе его содержимого.
-    
+
     Args:
         content: Строка с содержимым
-        
+
     Returns:
         str: Тип контента ('json', 'xml', 'html' или 'text')
     """
     content = content.strip()
-    
+
     # Проверяем JSON
     if content.startswith(("{", "[")) and content.endswith(("}", "]")):
         try:
@@ -272,7 +272,7 @@ def detect_content_type(content: str) -> str:
             return "json"
         except json.JSONDecodeError:
             pass
-    
+
     # Проверяем HTML
     if content.startswith("<") and content.endswith(">"):
         # Сначала проверяем HTML-специфичные теги
@@ -286,15 +286,15 @@ def detect_content_type(content: str) -> str:
             # Если не удалось разобрать как XML, считаем что это HTML
             if "<" in content and ">" in content:
                 return "html"
-    
+
     return "text"
 
 def html_to_markdown(content: str) -> str:
     """Преобразовать HTML в Markdown.
-    
+
     Args:
         content: HTML-строка
-        
+
     Returns:
         str: Markdown-строка
     """
@@ -302,18 +302,18 @@ def html_to_markdown(content: str) -> str:
 
 def format_content(content: str, content_type: Optional[str] = None) -> str:
     """Форматировать содержимое с автоопределением типа.
-    
+
     Args:
         content: Строка с содержимым
         content_type: Тип содержимого (опционально)
-        
+
     Returns:
         str: Отформатированное содержимое
     """
     # Определяем тип контента, если не указан
     if not content_type:
         content_type = detect_content_type(content)
-    
+
     # Форматируем в зависимости от типа
     if content_type == "json":
         return format_json(content)
@@ -322,4 +322,4 @@ def format_content(content: str, content_type: Optional[str] = None) -> str:
     elif content_type == "html":
         return format_html(content)
     else:
-        return content 
+        return content

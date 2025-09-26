@@ -53,15 +53,15 @@ class CurlGenerator:
             command.append("-v")
         if insecure:
             command.append("-k")
-        
+
         # HTTP method
         if method.upper() != "GET":
             command.append(f"-X {method.upper()}")
-        
+
         # Headers
         for key, value in headers.items():
             command.append(f"-H '{key}: {value}'")
-        
+
         # Request data
         if json_data:
             if "Content-Type" not in headers:
@@ -76,15 +76,15 @@ class CurlGenerator:
         elif form_data:
             for key, value in form_data.items():
                 command.append(f"-F '{key}={value}'")
-        
+
         # Build URL with query parameters
         if query_params:
             query_str = "&".join([f"{key}={value}" for key, value in query_params.items()])
             url = f"{url}{'?' if '?' not in url else '&'}{query_str}"
-        
+
         # Add URL
         command.append(f"'{url}'")
-        
+
         return " ".join(command)
 
     @staticmethod
@@ -118,7 +118,7 @@ class CurlGenerator:
         """
         if console is None:
             console = Console()
-        
+
         syntax = Syntax(curl_command, "bash", theme="monokai", word_wrap=True)
         console.print(syntax)
 
@@ -140,4 +140,4 @@ def convert_dict_to_curl_args(data: Dict[str, Any]) -> List[str]:
             args.append(f"{key}={value}")
         else:
             args.append(f"{key}={shlex.quote(str(value))}")
-    return args 
+    return args

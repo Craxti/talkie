@@ -132,9 +132,9 @@ def test_validate_openapi_spec(sample_openapi_json):
 def test_extract_endpoints(sample_openapi_json):
     """Тест извлечения конечных точек из OpenAPI спецификации."""
     endpoints = extract_endpoints(sample_openapi_json)
-    
+
     assert len(endpoints) == 3
-    
+
     # Проверяем, что все эндпоинты присутствуют
     endpoint_keys = [(e["path"], e["method"]) for e in endpoints]
     assert ("/users", "get") in endpoint_keys
@@ -145,7 +145,7 @@ def test_extract_endpoints(sample_openapi_json):
 def test_extract_endpoint_details(sample_openapi_json):
     """Тест извлечения деталей конечной точки из OpenAPI спецификации."""
     details = extract_endpoint_details(sample_openapi_json, "/users", "get")
-    
+
     assert details["summary"] == "Get users"
     assert "responses" in details
     assert "200" in details["responses"]
@@ -154,9 +154,9 @@ def test_extract_endpoint_details(sample_openapi_json):
 def test_format_openapi_spec(sample_openapi_json):
     """Тест форматирования OpenAPI спецификации."""
     formatted = format_openapi_spec(sample_openapi_json)
-    
+
     # Проверяем, что результат - строка и содержит ключевые элементы
     assert isinstance(formatted, str)
     assert "Test API" in formatted
     assert "/users" in formatted
-    assert "Get users" in formatted 
+    assert "Get users" in formatted

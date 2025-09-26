@@ -9,7 +9,7 @@ STATUS_COLORS = {
     101: "blue",
     102: "blue",
     103: "blue",
-    
+
     # Успешные (2xx)
     200: "green",
     201: "green",
@@ -21,7 +21,7 @@ STATUS_COLORS = {
     207: "green",
     208: "green",
     226: "green",
-    
+
     # Перенаправления (3xx)
     300: "yellow",
     301: "yellow",
@@ -32,7 +32,7 @@ STATUS_COLORS = {
     306: "yellow",
     307: "yellow",
     308: "yellow",
-    
+
     # Ошибки клиента (4xx)
     400: "red",
     401: "red",
@@ -63,7 +63,7 @@ STATUS_COLORS = {
     429: "red",
     431: "red",
     451: "red",
-    
+
     # Ошибки сервера (5xx)
     500: "magenta",
     501: "magenta",
@@ -95,10 +95,10 @@ CONTENT_TYPE_COLORS = {
 
 def get_status_color(status_code: int) -> str:
     """Получить цвет для статус-кода.
-    
+
     Args:
         status_code: HTTP-статус код
-        
+
     Returns:
         str: Название цвета для Rich
     """
@@ -107,15 +107,15 @@ def get_status_color(status_code: int) -> str:
 
 def get_content_type_color(content_type: str) -> str:
     """Получить цвет для типа содержимого.
-    
+
     Args:
         content_type: MIME-тип содержимого
-        
+
     Returns:
         str: Название цвета для Rich
     """
     for key, color in CONTENT_TYPE_COLORS.items():
         if key in content_type:
             return color
-    
-    return CONTENT_TYPE_COLORS["default"] 
+
+    return CONTENT_TYPE_COLORS["default"]

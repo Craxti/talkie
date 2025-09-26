@@ -20,7 +20,7 @@ def mock_http_response():
         def __init__(self, data=None, errors=None):
             self._data = data or {}
             self._errors = errors
-            
+
         def json(self):
             response = {}
             if self._data:
@@ -28,7 +28,7 @@ def mock_http_response():
             if self._errors:
                 response["errors"] = self._errors
             return response
-    
+
     return MockResponse
 
 
@@ -45,7 +45,7 @@ def test_graphql_client_init():
         headers={"Authorization": "Bearer token"},
         timeout=60
     )
-    
+
     assert client.endpoint == "https://api.example.com/graphql"
     assert client.headers["Authorization"] == "Bearer token"
     assert client.headers["Content-Type"] == "application/json"
@@ -64,7 +64,7 @@ def test_graphql_client_execute(graphql_client, mock_http_response):
         }
     }
     """
-    
+
     variables = {"id": "123"}
     mock_data = {
         "user": {
@@ -73,11 +73,11 @@ def test_graphql_client_execute(graphql_client, mock_http_response):
             "email": "john@example.com"
         }
     }
-    
+
     with patch("talkie.core.client.HttpClient.request",
               return_value=mock_http_response(data=mock_data)):
         response = graphql_client.execute(query, variables)
-        
+
         assert isinstance(response, GraphQLResponse)
         assert response.data == mock_data
         assert response.errors is None
@@ -87,11 +87,11 @@ def test_graphql_client_execute_with_error(graphql_client, mock_http_response):
     """Тест выполнения GraphQL запроса с ошибкой."""
     query = "query { invalidField }"
     mock_errors = [{"message": "Field 'invalidField' doesn't exist"}]
-    
+
     with patch("talkie.core.client.HttpClient.request",
               return_value=mock_http_response(errors=mock_errors)):
         response = graphql_client.execute(query)
-        
+
         assert isinstance(response, GraphQLResponse)
         assert response.data is None
         assert response.errors == mock_errors
@@ -107,9 +107,9 @@ def test_extract_variables(graphql_client):
         }
     }
     """
-    
+
     variables = graphql_client.extract_variables(query)
-    
+
     assert len(variables) == 2
     assert variables[0].name == "id"
     assert variables[0].type == "ID"
@@ -130,7 +130,7 @@ def test_extract_operation_name(graphql_client):
         }
     }
     """
-    
+
     operation_name = graphql_client.extract_operation_name(query)
     assert operation_name == "GetUserProfile"
 
@@ -149,7 +149,7 @@ def test_validate_query(graphql_client):
     is_valid, error = graphql_client.validate_query(valid_query)
     assert is_valid is True
     assert error is None
-    
+
     # Невалидный запрос
     invalid_query = """
     query {
@@ -167,7 +167,7 @@ def test_format_query(graphql_client):
     """Тест форматирования GraphQL запроса."""
     unformatted_query = """query{user{id name email}}"""
     formatted_query = graphql_client.format_query(unformatted_query)
-    
+
     expected = """query {
   user {
     id
@@ -175,7 +175,7 @@ def test_format_query(graphql_client):
     email
   }
 }"""
-    
+
     assert formatted_query.strip() == expected.strip()
 
 
@@ -185,14 +185,14 @@ def test_build_query(graphql_client):
         GraphQLVariable(name="id", type="ID", required=True),
         GraphQLVariable(name="limit", type="Int", value=10)
     ]
-    
+
     query = graphql_client.build_query(
         operation_type="query",
         operation_name="GetUser",
         fields=["id", "name", "email"],
         variables=variables
     )
-    
+
     expected = """query GetUser($id: ID!, $limit: Int) {
   user(id: $id, limit: $limit) {
     id
@@ -200,7 +200,7 @@ def test_build_query(graphql_client):
     email
   }
 }"""
-    
+
     assert query.strip() == expected.strip()
 
 
@@ -222,12 +222,12 @@ async def test_introspection_fetch_schema():
             ]
         }
     }
-    
+
     client = GraphQLClient("https://api.example.com/graphql")
     with patch.object(client, "execute", return_value=GraphQLResponse(data=mock_schema)):
         introspection = GraphQLIntrospection(client)
         schema = await introspection.fetch_schema()
-        
+
         assert schema == mock_schema["__schema"]
 
 
@@ -241,18 +241,18 @@ def test_introspection_get_types(graphql_client):
             {"name": "String", "kind": "SCALAR"}
         ]
     }
-    
+
     introspection = GraphQLIntrospection(graphql_client)
     introspection.schema = mock_schema
-    
+
     # Test getting query type
     query_type = introspection.get_query_type()
     assert query_type["name"] == "Query"
-    
+
     # Test getting type by name
     user_type = introspection.get_type_by_name("User")
     assert user_type["name"] == "User"
-    
+
     # Test getting list of queries
     queries = introspection.get_queries()
-    assert isinstance(queries, list) 
+    assert isinstance(queries, list)

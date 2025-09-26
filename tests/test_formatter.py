@@ -2,9 +2,9 @@ import pytest
 import json
 import xml.etree.ElementTree as ET
 from talkie.utils.formatter import (
-    format_json, 
-    format_xml, 
-    format_html, 
+    format_json,
+    format_xml,
+    format_html,
     detect_content_type,
     html_to_markdown,
     format_content
@@ -84,17 +84,17 @@ def test_format_content():
     json_content = '{"name": "Test", "value": 123}'
     assert "name" in format_content(json_content)
     assert "Test" in format_content(json_content)
-    
+
     # XML
     xml_content = '<root><item>value</item></root>'
     formatted_xml = format_content(xml_content)
     assert "<root>" in formatted_xml
     assert "<item>" in formatted_xml
     assert "value" in formatted_xml
-    
+
     # HTML
     html_content = '<html><body><h1>Test</h1></body></html>'
     formatted_html = format_content(html_content)
     assert "<html>" in formatted_html
     assert "<body>" in formatted_html
-    assert "<h1>" in formatted_html 
+    assert "<h1>" in formatted_html

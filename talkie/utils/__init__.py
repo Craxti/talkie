@@ -1,1 +1,1 @@
-"""Utility modules for Talkie.""" 
+"""Utility modules for Talkie."""

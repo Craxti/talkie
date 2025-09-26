@@ -30,9 +30,9 @@ def test_http_client_init():
 def test_client_get_request(mock_request, mock_response):
     """Тест выполнения GET-запроса."""
     mock_request.return_value = mock_response
-    
+
     client = HttpClient()
-    
+
     request = {
         "method": "GET",
         "url": "https://example.com/api",
@@ -40,17 +40,17 @@ def test_client_get_request(mock_request, mock_response):
         "params": {"page": "1"},
         "timeout": 30.0
     }
-    
+
     response = client.send(request)
-    
+
     assert response.status_code == 200
     assert response.headers["Content-Type"] == "application/json"
     assert response.json() == {"id": 1, "name": "Test"}
-    
+
     # Проверка, что метод request был вызван с правильными параметрами
     mock_request.assert_called_once()
     args, kwargs = mock_request.call_args
-    
+
     assert kwargs["method"] == "GET"
     assert kwargs["url"] == "https://example.com/api"
     assert kwargs["headers"] == {"Accept": "application/json"}
@@ -61,9 +61,9 @@ def test_client_get_request(mock_request, mock_response):
 def test_client_post_request_json(mock_request, mock_response):
     """Тест выполнения POST-запроса с JSON."""
     mock_request.return_value = mock_response
-    
+
     client = HttpClient()
-    
+
     request = {
         "method": "POST",
         "url": "https://example.com/api/users",
@@ -71,15 +71,15 @@ def test_client_post_request_json(mock_request, mock_response):
         "json": {"name": "Test User", "age": 30},
         "timeout": 30.0
     }
-    
+
     response = client.send(request)
-    
+
     assert response.status_code == 200
-    
+
     # Проверка, что метод request был вызван с правильными параметрами
     mock_request.assert_called_once()
     args, kwargs = mock_request.call_args
-    
+
     assert kwargs["method"] == "POST"
     assert kwargs["url"] == "https://example.com/api/users"
     assert kwargs["headers"] == {"Content-Type": "application/json"}
@@ -90,9 +90,9 @@ def test_client_post_request_json(mock_request, mock_response):
 def test_client_post_request_form(mock_request, mock_response):
     """Тест выполнения POST-запроса с данными формы."""
     mock_request.return_value = mock_response
-    
+
     client = HttpClient()
-    
+
     request = {
         "method": "POST",
         "url": "https://example.com/api/login",
@@ -100,15 +100,15 @@ def test_client_post_request_form(mock_request, mock_response):
         "data": {"username": "test", "password": "password123"},
         "timeout": 30.0
     }
-    
+
     response = client.send(request)
-    
+
     assert response.status_code == 200
-    
+
     # Проверка, что метод request был вызван с правильными параметрами
     mock_request.assert_called_once()
     args, kwargs = mock_request.call_args
-    
+
     assert kwargs["method"] == "POST"
     assert kwargs["url"] == "https://example.com/api/login"
     assert kwargs["headers"] == {"Content-Type": "application/x-www-form-urlencoded"}
@@ -120,6 +120,6 @@ def test_client_context_manager():
     with patch.object(HttpClient, "close") as mock_close:
         with HttpClient() as client:
             assert isinstance(client, HttpClient)
-        
+
         # Проверка, что метод close был вызван
-        mock_close.assert_called_once() 
+        mock_close.assert_called_once()

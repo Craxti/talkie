@@ -19,7 +19,7 @@ logger = Logger()
 class WebSocketMessage(BaseModel):
     """
     WebSocket message model.
-    
+
     Attributes:
         type (str): Message type (text, binary, ping, pong, close).
         data (Union[str, bytes, dict]): Message data.
@@ -33,10 +33,10 @@ class WebSocketMessage(BaseModel):
 class WebSocketClient:
     """
     Client for working with WebSocket connections.
-    
+
     The class provides an interface for establishing WebSocket connections,
     sending and receiving messages, and handling events.
-    
+
     Attributes:
         uri (str): WebSocket connection URI.
         headers (Dict[str, str]): Connection headers.
@@ -45,7 +45,7 @@ class WebSocketClient:
         reconnect_interval (float): Interval between reconnection attempts in seconds.
         connection (websockets.WebSocketClientProtocol): WebSocket connection object.
         is_connected (bool): Connection state flag.
-        
+
     Examples:
         >>> async def main():
         ...     client = WebSocketClient("wss://echo.websocket.org")
@@ -56,7 +56,7 @@ class WebSocketClient:
         ...     await client.disconnect()
         >>> asyncio.run(main())
     """
-    
+
     def __init__(
         self,
         uri: str,
@@ -71,7 +71,7 @@ class WebSocketClient:
     ):
         """
         Initialize WebSocket client.
-        
+
         Args:
             uri (str): WebSocket connection URI.
             headers (Dict[str, str], optional): Connection headers.
@@ -85,7 +85,7 @@ class WebSocketClient:
         self.max_reconnect_attempts = max_reconnect_attempts
         self.reconnect_interval = reconnect_interval
         self.timeout = timeout
-        
+
         # SSL configuration
         self.ssl_context = ssl_context
         if cert_file or key_file:
@@ -94,26 +94,26 @@ class WebSocketClient:
                 self.ssl_context.load_cert_chain(cert_file, key_file)
             elif cert_file:
                 self.ssl_context.load_cert_chain(cert_file)
-        
+
         self.connection = None
         self.is_connected = False
         self._event_handlers: Dict[str, List[Callable]] = {}
         self._message_queue = asyncio.Queue()
         self._background_tasks = set()
-    
+
     async def connect(self) -> bool:
         """
         Establish WebSocket connection.
-        
+
         Returns:
             bool: True if connection was successfully established, False otherwise.
-            
+
         Raises:
             websockets.exceptions.WebSocketException: If connection cannot be established.
         """
         try:
             logger.info(f"Connecting to {self.uri}")
-            
+
             # Prepare connection parameters
             connect_kwargs = {
                 'uri': self.uri,
@@ -121,29 +121,29 @@ class WebSocketClient:
                 'ping_timeout': self.timeout,
                 'close_timeout': self.timeout,
             }
-            
+
             # Add SSL context if provided
             if self.ssl_context:
                 connect_kwargs['ssl'] = self.ssl_context
-            
+
             self.connection = await websockets.connect(**connect_kwargs)
             self.is_connected = True
-            
+
             # Start background task for listening to incoming messages
             task = asyncio.create_task(self._listen_for_messages())
             self._background_tasks.add(task)
             task.add_done_callback(self._background_tasks.discard)
-            
+
             logger.info(f"Connection established with {self.uri}")
             return True
         except Exception as e:
             logger.error(f"Error connecting to {self.uri}: {str(e)}")
             return False
-    
+
     async def reconnect(self) -> bool:
         """
         Reconnect to WebSocket server in case of connection loss.
-        
+
         Returns:
             bool: True if reconnection was successful, False otherwise.
         """
@@ -152,13 +152,13 @@ class WebSocketClient:
             logger.info(f"Reconnection attempt {attempt + 1}/{self.max_reconnect_attempts}")
             if await self.connect():
                 return True
-            
+
             attempt += 1
             await asyncio.sleep(self.reconnect_interval)
-        
+
         logger.error(f"Failed to reconnect after {self.max_reconnect_attempts} attempts")
         return False
-    
+
     async def disconnect(self) -> None:
         """
         Close WebSocket connection.
@@ -171,29 +171,29 @@ class WebSocketClient:
                 logger.error(f"Error closing connection: {str(e)}")
             finally:
                 self.is_connected = False
-                
+
                 # Cancel all background tasks
                 for task in self._background_tasks:
                     task.cancel()
-                
+
                 logger.info(f"Connection to {self.uri} closed")
-    
+
     async def send(self, message: Union[str, Dict[str, Any], WebSocketMessage]) -> bool:
         """
         Send message through WebSocket connection.
-        
+
         Args:
             message (Union[str, Dict[str, Any], WebSocketMessage]): Message to send.
                 Can be a string, dictionary (which will be converted to JSON) or
                 WebSocketMessage object.
-                
+
         Returns:
             bool: True if message was successfully sent, False otherwise.
         """
         if not self.is_connected:
             logger.error("Cannot send message: connection not established")
             return False
-        
+
         try:
             if isinstance(message, WebSocketMessage):
                 if isinstance(message.data, dict):
@@ -204,18 +204,18 @@ class WebSocketClient:
                 await self.connection.send(json.dumps(message))
             else:
                 await self.connection.send(message)
-            
+
             return True
         except Exception as e:
             logger.error(f"Error sending message: {str(e)}")
             if self.auto_reconnect:
                 await self.reconnect()
             return False
-    
+
     async def receive(self) -> Optional[WebSocketMessage]:
         """
         Get message from incoming message queue.
-        
+
         Returns:
             Optional[WebSocketMessage]: Received message or None if error occurred.
         """
@@ -224,7 +224,7 @@ class WebSocketClient:
         except Exception as e:
             logger.error(f"Error receiving message: {str(e)}")
             return None
-    
+
     async def _listen_for_messages(self) -> None:
         """
         Background task for listening to incoming messages.
@@ -242,43 +242,43 @@ class WebSocketClient:
                         msg = WebSocketMessage(type="text", data=message)
                 else:
                     msg = WebSocketMessage(type="binary", data=message)
-                
+
                 # Place message in queue
                 await self._message_queue.put(msg)
-                
+
                 # Call event handlers
                 await self._trigger_event("message", msg)
                 await self._trigger_event(msg.type, msg)
-                
+
         except (websockets.exceptions.ConnectionClosed, websockets.exceptions.WebSocketException) as e:
             logger.warning(f"Connection closed: {str(e)}")
             self.is_connected = False
-            
+
             # Call connection close handlers
             close_msg = WebSocketMessage(
-                type="close", 
+                type="close",
                 data={"reason": str(e)}
             )
             await self._trigger_event("close", close_msg)
-            
+
             # Try to reconnect if auto-reconnect is enabled
             if self.auto_reconnect:
                 await self.reconnect()
         except Exception as e:
             logger.error(f"Error listening for messages: {str(e)}")
             self.is_connected = False
-            
+
             # Call error handlers
             error_msg = WebSocketMessage(
-                type="error", 
+                type="error",
                 data={"error": str(e)}
             )
             await self._trigger_event("error", error_msg)
-    
+
     async def _trigger_event(self, event_name: str, data: Any) -> None:
         """
         Call handlers for specified event.
-        
+
         Args:
             event_name (str): Event name.
             data (Any): Data passed to handlers.
@@ -292,24 +292,24 @@ class WebSocketClient:
                     handler(data)
             except Exception as e:
                 logger.error(f"Error in event handler {event_name}: {str(e)}")
-    
+
     def on(self, event_name: str, handler: Callable) -> None:
         """
         Register event handler.
-        
+
         Args:
             event_name (str): Event name ("message", "close", "error", "json", "text", "binary").
             handler (Callable): Event handler function.
         """
         if event_name not in self._event_handlers:
             self._event_handlers[event_name] = []
-        
+
         self._event_handlers[event_name].append(handler)
-    
+
     def off(self, event_name: str, handler: Optional[Callable] = None) -> None:
         """
         Remove event handler or all handlers for specified event.
-        
+
         Args:
             event_name (str): Event name.
             handler (Optional[Callable]): Handler function to remove.
@@ -317,7 +317,7 @@ class WebSocketClient:
         """
         if event_name not in self._event_handlers:
             return
-        
+
         if handler is None:
             # Remove all handlers for event
             self._event_handlers[event_name] = []
@@ -326,14 +326,14 @@ class WebSocketClient:
             self._event_handlers[event_name] = [
                 h for h in self._event_handlers[event_name] if h != handler
             ]
-    
+
     async def stream(self) -> AsyncGenerator[WebSocketMessage, None]:
         """
         Create asynchronous generator for receiving messages in stream mode.
-        
+
         Yields:
             WebSocketMessage: Received messages.
-            
+
         Examples:
             >>> async def process_messages():
             ...     client = WebSocketClient("wss://example.com/ws")
@@ -349,4 +349,4 @@ class WebSocketClient:
                     yield message
             except Exception as e:
                 logger.error(f"Error streaming messages: {str(e)}")
-                break 
+                break

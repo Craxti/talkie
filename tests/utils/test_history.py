@@ -63,7 +63,7 @@ def test_history_initialization(temp_history_dir):
         history_file=history_file,
         max_records=500
     )
-    
+
     assert history.history_file == history_file
     assert history.max_records == 500
     assert len(history.records) == 0
@@ -73,7 +73,7 @@ def test_history_initialization(temp_history_dir):
 def test_add_record(history, sample_record):
     """Тест добавления записи в историю."""
     record_id = history.add_record(sample_record)
-    
+
     assert record_id == sample_record.id
     assert len(history.records) == 1
     assert history.records[0] == sample_record
@@ -83,11 +83,11 @@ def test_add_record(history, sample_record):
 def test_get_record(history, sample_record):
     """Тест получения записи по идентификатору."""
     history.add_record(sample_record)
-    
+
     # Получение существующей записи
     record = history.get_record(sample_record.id)
     assert record == sample_record
-    
+
     # Получение несуществующей записи
     record = history.get_record("non_existent_id")
     assert record is None
@@ -96,12 +96,12 @@ def test_get_record(history, sample_record):
 def test_delete_record(history, sample_record):
     """Тест удаления записи."""
     history.add_record(sample_record)
-    
+
     # Удаление существующей записи
     success = history.delete_record(sample_record.id)
     assert success is True
     assert len(history.records) == 0
-    
+
     # Удаление несуществующей записи
     success = history.delete_record("non_existent_id")
     assert success is False
@@ -111,7 +111,7 @@ def test_clear_history(history, sample_record):
     """Тест очистки истории."""
     history.add_record(sample_record)
     assert len(history.records) == 1
-    
+
     history.clear()
     assert len(history.records) == 0
     assert history.history_file.exists()
@@ -120,7 +120,7 @@ def test_clear_history(history, sample_record):
 def test_max_records_limit(history):
     """Тест ограничения максимального количества записей."""
     history.max_records = 2
-    
+
     # Добавляем 3 записи
     for i in range(3):
         record = RequestRecord(
@@ -129,7 +129,7 @@ def test_max_records_limit(history):
             response_status=200
         )
         history.add_record(record)
-    
+
     assert len(history.records) == 2
     assert history.records[0].url == "https://api.example.com/users/2"
     assert history.records[1].url == "https://api.example.com/users/1"
@@ -161,30 +161,30 @@ def test_search_records(history):
             tags=["api", "posts"]
         )
     ]
-    
+
     for record in records:
         history.add_record(record)
-    
+
     # Поиск по методу
     results = history.search(method="GET")
     assert len(results) == 2
-    
+
     # Поиск по URL
     results = history.search(url_pattern="users")
     assert len(results) == 2
-    
+
     # Поиск по статусу
     results = history.search(status_range=(200, 299))
     assert len(results) == 2
-    
+
     # Поиск по окружению
     results = history.search(environment="prod")
     assert len(results) == 2
-    
+
     # Поиск по тегам
     results = history.search(tags=["users"])
     assert len(results) == 2
-    
+
     # Комбинированный поиск
     results = history.search(
         method="GET",
@@ -197,12 +197,12 @@ def test_search_records(history):
 def test_save_and_load(history, sample_record):
     """Test saving and loading history."""
     history.add_record(sample_record)
-    
+
     # Create new history instance
     new_history = RequestHistory(
         history_file=history.history_file
     )
-    
+
     assert len(new_history.records) == 1
     assert new_history.records[0].model_dump() == sample_record.model_dump()
 
@@ -210,19 +210,19 @@ def test_save_and_load(history, sample_record):
 def test_export_and_import(history, sample_record, temp_history_dir):
     """Test exporting and importing history."""
     history.add_record(sample_record)
-    
+
     # Export
     export_file = os.path.join(temp_history_dir, "export.json")
     success = history.export_to_file(export_file)
     assert success is True
     assert os.path.exists(export_file)
-    
+
     # Import into new history
     new_history = RequestHistory(
         history_file=Path(os.path.join(temp_history_dir, "new")) / "requests.json"
     )
     success = new_history.import_from_file(export_file)
-    
+
     assert success is True
     assert len(new_history.records) == 1
     assert new_history.records[0].model_dump() == sample_record.model_dump()
@@ -237,7 +237,7 @@ def test_json_serialization(history, sample_record):
             default=history._json_serializer
         )
         assert isinstance(json_str, str)
-        
+
         # Проверяем, что datetime сериализуется корректно
         data = json.loads(json_str)
         assert isinstance(data["timestamp"], str)
@@ -253,4 +253,4 @@ def test_search_in_body(history):
     assert history._search_in_body("test string", "string") is True
     assert history._search_in_body(123, "123") is True
     assert history._search_in_body(None, "test") is False
-    assert history._search_in_body({"key": "value"}, "missing") is False 
+    assert history._search_in_body({"key": "value"}, "missing") is False

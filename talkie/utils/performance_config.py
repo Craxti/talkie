@@ -8,42 +8,42 @@ import os
 @dataclass
 class PerformanceConfig:
     """Configuration for performance optimizations."""
-    
+
     # HTTP Client settings
     max_connections: int = 100
     max_keepalive_connections: int = 20
     connection_timeout: float = 30.0
     read_timeout: float = 30.0
     enable_http2: bool = True
-    
+
     # Caching settings
     cache_enabled: bool = True
     cache_max_size_mb: float = 100.0
     cache_max_entries: int = 1000
     cache_ttl_seconds: int = 3600
     cache_max_response_size_mb: float = 1.0
-    
+
     # Async settings
     max_concurrent_requests: int = 50
     request_delay_ms: float = 0.0
     batch_size: int = 10
-    
+
     # Memory management
     max_memory_usage_mb: float = 500.0
     gc_threshold: int = 1000
     enable_memory_monitoring: bool = True
-    
+
     # Logging settings
     log_performance_metrics: bool = True
     log_level: str = "INFO"
     max_log_file_size_mb: float = 10.0
     max_log_files: int = 5
-    
+
     # Benchmark settings
     benchmark_warmup_requests: int = 10
     benchmark_sample_size: int = 100
     benchmark_timeout_seconds: int = 300
-    
+
     @classmethod
     def from_env(cls) -> "PerformanceConfig":
         """Create configuration from environment variables."""
@@ -72,7 +72,7 @@ class PerformanceConfig:
             benchmark_sample_size=int(os.getenv("TALKIE_BENCHMARK_SAMPLE", "100")),
             benchmark_timeout_seconds=int(os.getenv("TALKIE_BENCHMARK_TIMEOUT", "300"))
         )
-    
+
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary."""
         return {
@@ -100,7 +100,7 @@ class PerformanceConfig:
             "benchmark_sample_size": self.benchmark_sample_size,
             "benchmark_timeout_seconds": self.benchmark_timeout_seconds
         }
-    
+
     def validate(self) -> None:
         """Validate configuration values."""
         if self.max_connections <= 0:

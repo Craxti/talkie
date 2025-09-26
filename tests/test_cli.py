@@ -11,13 +11,13 @@ def mock_http_response(monkeypatch):
     class MockURL:
         def __init__(self):
             self.params = {}
-    
+
     class MockRequest:
         def __init__(self):
             self.method = "GET"
             self.headers = {"User-Agent": "talkie/0.1.2"}
             self.url = MockURL()
-    
+
     class MockResponse:
         def __init__(self, status_code=200, content=None, headers=None):
             self.status_code = status_code
@@ -28,30 +28,30 @@ def mock_http_response(monkeypatch):
             self.elapsed = timedelta(milliseconds=100)
             self.request = MockRequest()
             self.url = "https://example.com/api"
-            
+
         @property
         def content(self):
             return self._content
-            
+
         @property
         def text(self):
             return self._content.decode('utf-8')
-            
+
         def json(self):
             import json
             return json.loads(self.text)
-            
+
         def raise_for_status(self):
             if self.status_code >= 400:
                 raise Exception(f"HTTP Error: {self.status_code}")
-    
+
     class MockClient:
         def __init__(self, *args, **kwargs):
             pass
-            
+
         def request(self, *args, **kwargs):
             return MockResponse()
-    
+
     monkeypatch.setattr("talkie.core.client.httpx.Client", MockClient)
 
 
@@ -73,9 +73,9 @@ def test_post_command(mock_http_response):
 def test_headers_option(mock_http_response):
     """Тест опции добавления заголовков."""
     result = runner.invoke(cli, [
-        "get", 
-        "https://example.com/api", 
-        "-H", "Authorization: Bearer test", 
+        "get",
+        "https://example.com/api",
+        "-H", "Authorization: Bearer test",
         "-H", "Accept: application/json"
     ])
     assert result.exit_code == 0
@@ -103,4 +103,4 @@ def test_output_file_option(mock_http_response, tmp_path):
     output_file = tmp_path / "output.json"
     result = runner.invoke(cli, ["get", "https://example.com/api", "-o", str(output_file)])
     assert result.exit_code == 0
-    assert output_file.exists() 
+    assert output_file.exists()

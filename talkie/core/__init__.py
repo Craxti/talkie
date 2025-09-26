@@ -1,1 +1,1 @@
-"""Talkie application core.""" 
+"""Talkie application core."""

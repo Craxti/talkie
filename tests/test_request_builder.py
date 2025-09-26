@@ -13,7 +13,7 @@ def test_request_builder_init():
         method="GET",
         url="https://example.com/api"
     )
-    
+
     assert builder.method == "GET"
     assert builder.url == "https://example.com/api"
     assert builder.headers == {}
@@ -29,13 +29,13 @@ def test_parse_headers():
         "Authorization: Bearer token123",
         "X-Custom-Header: value"
     ]
-    
+
     builder = RequestBuilder(
         method="GET",
         url="https://example.com/api",
         headers=headers
     )
-    
+
     assert builder.headers == {
         "Content-Type": "application/json",
         "Authorization": "Bearer token123",
@@ -50,13 +50,13 @@ def test_parse_data():
         "password=password123",
         "remember=true"
     ]
-    
+
     builder = RequestBuilder(
         method="POST",
         url="https://example.com/api/login",
         data=data
     )
-    
+
     assert builder.data == {
         "username": "testuser",
         "password": "password123",
@@ -73,13 +73,13 @@ def test_parse_json_data():
         "skills:=[\"python\", \"javascript\"]",
         "profile:={\"title\": \"Developer\", \"level\": 5}"
     ]
-    
+
     builder = RequestBuilder(
         method="POST",
         url="https://example.com/api/users",
         data=data
     )
-    
+
     assert builder.json_data == {
         "age": 30,
         "is_admin": True,
@@ -96,13 +96,13 @@ def test_parse_query():
         "sort=name",
         "order=asc"
     ]
-    
+
     builder = RequestBuilder(
         method="GET",
         url="https://example.com/api/users",
         query=query
     )
-    
+
     assert builder.query_params == {
         "page": "1",
         "limit": "10",
@@ -120,17 +120,17 @@ def test_apply_config():
             "Accept": "application/json"
         }
     )
-    
+
     # Создаем построитель с некоторыми заголовками
     builder = RequestBuilder(
         method="GET",
         url="https://example.com/api",
         headers=["Authorization: Bearer token123"]
     )
-    
+
     # Применяем конфигурацию
     builder.apply_config(config)
-    
+
     # Проверяем, что заголовки из конфигурации добавлены,
     # но не перезаписывают существующие
     assert builder.headers == {
@@ -148,9 +148,9 @@ def test_build_get_request():
         headers=["Accept: application/json"],
         query=["page=1", "limit=10"]
     )
-    
+
     request = builder.build()
-    
+
     assert request["method"] == "GET"
     assert request["url"] == "https://example.com/api/users"
     assert request["headers"] == {"Accept": "application/json"}
@@ -167,9 +167,9 @@ def test_build_post_request_json():
         headers=["Authorization: Bearer token123"],
         data=["name=John", "age:=30", "is_admin:=true"]
     )
-    
+
     request = builder.build()
-    
+
     assert request["method"] == "POST"
     assert request["url"] == "https://example.com/api/users"
     assert request["headers"] == {
@@ -191,9 +191,9 @@ def test_build_post_request_form():
         url="https://example.com/api/login",
         data=["username=testuser", "password=password123"]
     )
-    
+
     request = builder.build()
-    
+
     assert request["method"] == "POST"
     assert request["url"] == "https://example.com/api/login"
     assert request["headers"] == {
@@ -217,7 +217,7 @@ def test_parse_headers_edge_cases():
         "Empty": "",
         "NoValue": ""
     }
-    
+
     # Заголовки с пробелами
     builder = RequestBuilder(
         method="GET",
@@ -227,7 +227,7 @@ def test_parse_headers_edge_cases():
     assert builder.headers == {
         "Content-Type": "application/json"
     }
-    
+
     # Дублирующиеся заголовки (должен использоваться последний)
     builder = RequestBuilder(
         method="GET",
@@ -255,7 +255,7 @@ def test_parse_data_edge_cases():
         "empty": "",
         "no_value": ""
     }
-    
+
     # Специальные символы
     builder = RequestBuilder(
         method="POST",
@@ -266,7 +266,7 @@ def test_parse_data_edge_cases():
         "key": "value with spaces",
         "symbols": "!@#$%^&*()"
     }
-    
+
     # Некорректный JSON
     builder = RequestBuilder(
         method="POST",
@@ -292,7 +292,7 @@ def test_parse_query_edge_cases():
         "page": "1",
         "limit": "10"
     }
-    
+
     # Специальные символы в параметрах
     builder = RequestBuilder(
         method="GET",
@@ -303,7 +303,7 @@ def test_parse_query_edge_cases():
         "q": "search term",
         "filter": "status!=done"
     }
-    
+
     # Дублирующиеся параметры (должен использоваться последний)
     builder = RequestBuilder(
         method="GET",
@@ -332,7 +332,7 @@ def test_mixed_form_and_json_data():
             "status=active"
         ]
     )
-    
+
     request = builder.build()
     assert request["headers"]["Content-Type"] == "application/json"
     assert request["json"] == {
@@ -342,4 +342,4 @@ def test_mixed_form_and_json_data():
         "roles": ["user", "admin"],
         "active": True,
         "status": "active"
-    } 
+    }

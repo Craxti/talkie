@@ -36,16 +36,16 @@ async def test_async_client_request(mock_response):
                 params={"page": "1"},
                 request_id="test_req"
             )
-            
+
             assert req_id == "test_req"
             assert response.status_code == 200
             assert response.headers["Content-Type"] == "application/json"
             assert response.json() == {"id": 1, "name": "Test"}
-            
+
             # Проверка, что метод request был вызван с правильными параметрами
             mock_request.assert_called_once()
             args, kwargs = mock_request.call_args
-            
+
             assert kwargs["method"] == "GET"
             assert kwargs["url"] == "https://example.com/api"
             assert kwargs["headers"] == {"Accept": "application/json"}
@@ -65,19 +65,19 @@ async def test_async_client_execute_batch(mock_response):
                 }
                 for i in range(1, 6)  # 5 запросов
             ]
-            
+
             results = await client.execute_batch(requests)
-            
+
             # Проверяем, что все запросы выполнились
             assert len(results) == 5
-            
+
             # Проверяем формат результатов
             for i, (req_id, response, error) in enumerate(results):
                 assert req_id == f"req_{i+1}"
                 assert response is not None
                 assert response.status_code == 200
                 assert error is None
-            
+
             # Проверяем количество вызовов request
             assert mock_request.call_count == 5
 
@@ -91,13 +91,13 @@ async def test_async_client_execute_batch_with_errors():
     success_response.headers = {"Content-Type": "application/json"}
     success_response.text = '{"id": 1, "name": "Test"}'
     success_response.json.return_value = {"id": 1, "name": "Test"}
-    
+
     # Функция-заглушка для имитации успешных и неудачных запросов
     async def mock_request(**kwargs):
         if "users/2" in kwargs["url"] or "users/4" in kwargs["url"]:
             raise httpx.ConnectError("Connection refused")
         return success_response
-    
+
     with patch("httpx.AsyncClient.request", side_effect=mock_request) as mock_request:
         async with AsyncHttpClient(concurrency=2) as client:
             requests = [
@@ -108,16 +108,16 @@ async def test_async_client_execute_batch_with_errors():
                 }
                 for i in range(1, 6)  # 5 запросов
             ]
-            
+
             results = await client.execute_batch(requests)
-            
+
             # Проверяем, что все запросы обработаны
             assert len(results) == 5
-            
+
             # Проверяем успешные запросы
             success_count = 0
             error_count = 0
-            
+
             for req_id, response, error in results:
                 if "req_2" in req_id or "req_4" in req_id:
                     assert response is None
@@ -129,7 +129,7 @@ async def test_async_client_execute_batch_with_errors():
                     assert response.status_code == 200
                     assert error is None
                     success_count += 1
-            
+
             assert success_count == 3
             assert error_count == 2
 
@@ -146,7 +146,7 @@ async def test_async_client_execute_from_file():
         temp.write("INVALID LINE\n")  # Некорректная строка
         temp.write("GET https://example.com/api/users/4\n")
         temp_filename = temp.name
-    
+
     # Создаем временную директорию для результатов
     with tempfile.TemporaryDirectory() as temp_dir:
         # Создаем успешный ответ
@@ -155,25 +155,25 @@ async def test_async_client_execute_from_file():
         success_response.headers = {"Content-Type": "application/json"}
         success_response.text = '{"id": 1, "name": "Test"}'
         success_response.json.return_value = {"id": 1, "name": "Test"}
-        
+
         with patch("httpx.AsyncClient.request", return_value=success_response) as mock_request:
             async with AsyncHttpClient() as client:
                 results = await client.execute_from_file(temp_filename, temp_dir)
-                
+
                 # Проверяем, что обработано правильное количество запросов
                 # (4 строки, из них 1 комментарий и 1 некорректная)
                 assert len(results) == 4
-                
+
                 # Проверяем, что все выполненные запросы успешны
                 for req_id, response, error in results:
                     assert response is not None
                     assert response.status_code == 200
                     assert error is None
-                
+
                 # Проверяем, что созданы файлы результатов
                 result_files = os.listdir(temp_dir)
                 assert len(result_files) == 4
-                
+
                 # Проверяем содержимое файлов
                 for i, filename in enumerate(sorted(result_files)):
                     filepath = os.path.join(temp_dir, filename)
@@ -183,7 +183,7 @@ async def test_async_client_execute_from_file():
                         assert data["response"]["headers"]["Content-Type"] == "application/json"
                         assert "id" in data["response"]["content"]
                         assert "name" in data["response"]["content"]
-    
+
     # Удаляем временный файл
     os.unlink(temp_filename)
 
@@ -203,12 +203,12 @@ async def test_async_client_with_delay():
                     }
                     for i in range(1, 4)  # 3 запроса
                 ]
-                
+
                 await client.execute_batch(requests)
-                
+
                 # Проверяем, что метод sleep был вызван для каждого запроса
                 # с правильным значением задержки
                 assert mock_sleep.await_count == 3
                 for call in mock_sleep.await_args_list:
                     args, _ = call
-                    assert args[0] == 0.5 
+                    assert args[0] == 0.5

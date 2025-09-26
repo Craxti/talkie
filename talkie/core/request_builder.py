@@ -9,7 +9,7 @@ from pydantic import BaseModel, Field, validator
 
 class RequestBuilder:
     """HTTP request builder."""
-    
+
     def __init__(
         self,
         method: str,
@@ -21,7 +21,7 @@ class RequestBuilder:
     ):
         """
         Initialize request builder.
-        
+
         Args:
             method: HTTP method
             url: Request URL
@@ -36,18 +36,18 @@ class RequestBuilder:
         self.data_list = data or []
         self.query_list = query or []
         self.timeout = timeout
-        
+
         # Initialize data
         self.headers = {}
         self.data = {}
         self.json_data = {}
         self.query_params = {}
-        
+
         # Parse parameters
         self._parse_headers()
         self._parse_data()
         self._parse_query()
-    
+
     def _parse_headers(self) -> None:
         """Parse headers from "key:value" format."""
         for header in self.headers_list:
@@ -57,19 +57,19 @@ class RequestBuilder:
                 value = value.strip()
                 if key:  # Skip headers with empty key
                     self.headers[key] = value
-    
+
     def _parse_data(self) -> None:
         """Parse data from "key=value" or "key:=value" format for JSON."""
         form_data = {}
         json_data = {}
         has_json = False
-        
+
         # First check if there are JSON data
         for item in self.data_list:
             if ":=" in item:
                 has_json = True
                 break
-        
+
         # Process all data
         for item in self.data_list:
             if ":=" in item:  # JSON data
@@ -102,7 +102,7 @@ class RequestBuilder:
                     form_data[key] = value
                     if has_json:  # If there is JSON data, add regular fields too
                         json_data[key] = value
-        
+
         # If there is JSON data, use it
         if has_json:
             self.json_data = json_data
@@ -110,17 +110,17 @@ class RequestBuilder:
         else:
             self.data = form_data
             self.json_data = {}
-    
+
     def _parse_query(self) -> None:
         """Parse query parameters from "key=value" format."""
         for param in self.query_list:
             if "=" in param:
                 key, value = param.split("=", 1)
                 self.query_params[key.strip()] = value.strip()
-    
+
     def apply_config(self, config: Any) -> None:
         """Apply settings from configuration.
-        
+
         Args:
             config: Configuration object with default headers etc.
         """
@@ -129,10 +129,10 @@ class RequestBuilder:
             for key, value in config.default_headers.items():
                 if key not in self.headers:
                     self.headers[key] = value
-    
+
     def build(self) -> Dict[str, Any]:
         """Build request.
-        
+
         Returns:
             Dict[str, Any]: Dictionary with request parameters
         """
@@ -141,15 +141,15 @@ class RequestBuilder:
             "url": self.url,
             "timeout": self.timeout,
         }
-        
+
         # Add headers
         if self.headers:
             request["headers"] = self.headers.copy()
-        
+
         # Add query parameters
         if self.query_params:
             request["params"] = self.query_params
-        
+
         # Add data
         if self.json_data:
             request["json"] = self.json_data
@@ -161,5 +161,5 @@ class RequestBuilder:
             if "headers" not in request:
                 request["headers"] = {}
             request["headers"]["Content-Type"] = "application/x-www-form-urlencoded"
-        
+
         return request

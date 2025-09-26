@@ -40,30 +40,30 @@ def mock_http_response(monkeypatch: pytest.MonkeyPatch) -> None:
             self.reason_phrase = "OK" if status_code == 200 else "Error"
             from datetime import timedelta
             self.elapsed = timedelta(milliseconds=100)
-            
+
         @property
         def content(self) -> bytes:
             return self._content
-            
+
         @property
         def text(self) -> str:
             return self._content.decode('utf-8')
-            
+
         def json(self) -> dict:
             import json
             return json.loads(self.text)
-            
+
         def raise_for_status(self) -> None:
             if self.status_code >= 400:
                 raise Exception(f"HTTP Error: {self.status_code}")
-    
+
     class MockClient:
         def __init__(self, *args, **kwargs) -> None:
             pass
-            
+
         def request(self, *args, **kwargs) -> MockResponse:
             return MockResponse()
-    
+
     monkeypatch.setattr("talkie.core.client.httpx.Client", MockClient)
 
 
@@ -72,26 +72,26 @@ def mock_server(request: SubRequest) -> Generator:
     """Запускает мок HTTP-сервер для интеграционных тестов."""
     pytest.importorskip("pytest_httpserver")
     from pytest_httpserver import HTTPServer
-    
+
     server = HTTPServer()
     server.start()
-    
+
     # Настраиваем мок-ответы
     server.expect_request("/api/users", method="GET").respond_with_json([
         {"id": 1, "name": "User 1"},
         {"id": 2, "name": "User 2"}
     ])
-    
+
     server.expect_request("/api/users", method="POST").respond_with_json(
         {"id": 3, "name": "New User"}
     )
-    
+
     server.expect_request("/api/users/1").respond_with_json(
         {"id": 1, "name": "User 1", "email": "user1@example.com"}
     )
-    
+
     yield server
-    
+
     server.stop()
 
 
@@ -137,4 +137,4 @@ def sample_openapi_spec() -> dict:
                 }
             }
         }
-    } 
+    }
