@@ -129,6 +129,12 @@ disable = [
     "W1309",  # f-string-without-interpolation
     "R0902",  # too-many-instance-attributes
     "W0404",  # reimported
+    "C0303",  # trailing-whitespace
+    "E0401",  # import-error
+    "C0411",  # wrong-import-order
+    "E1120",  # no-value-for-parameter
+    "E1124",  # redundant-keyword-arg
+    "W1514",  # unspecified-encoding
 ]
 
 [tool.pylint.format]
