@@ -1,143 +1,211 @@
-"""Module for generating curl commands."""
+"""Module for generating curl commands from HTTP requests."""
 
 import json
-import shlex
-from typing import Any, Dict, List, Optional
-
-from rich.console import Console
-from rich.syntax import Syntax
+from typing import Dict, Any, Optional, Union
+from urllib.parse import urlparse, parse_qs
 
 
-class CurlGenerator:
-    """Class for generating curl commands from Talkie requests."""
-
-    @staticmethod
-    def generate_curl(
-        method: str,
-        url: str,
-        headers: Dict[str, str] = None,
-        data: Dict[str, str] = None,
-        json_data: Dict[str, Any] = None,
-        query_params: Dict[str, str] = None,
-        form_data: Dict[str, str] = None,
-        verbose: bool = False,
-        insecure: bool = False,
-    ) -> str:
-        """Generate curl command from request parameters.
-
-        Args:
-            method: HTTP method
-            url: URL address
-            headers: HTTP headers
-            data: Data to send as application/x-www-form-urlencoded
-            json_data: JSON data to send as application/json
-            query_params: Query parameters
-            form_data: Form data to send as multipart/form-data
-            verbose: Enable verbose output (-v)
-            insecure: Do not verify SSL certificate (-k)
-
-        Returns:
-            str: curl command
-        """
-        headers = headers or {}
-        data = data or {}
-        json_data = json_data or {}
-        query_params = query_params or {}
-        form_data = form_data or {}
-
-        # Start command
-        command = ["curl"]
-
-        # Curl settings
-        if verbose:
-            command.append("-v")
-        if insecure:
-            command.append("-k")
-
-        # HTTP method
-        if method.upper() != "GET":
-            command.append(f"-X {method.upper()}")
-
-        # Headers
-        for key, value in headers.items():
-            command.append(f"-H '{key}: {value}'")
-
-        # Request data
-        if json_data:
-            if "Content-Type" not in headers:
-                command.append("-H 'Content-Type: application/json'")
-            json_str = json.dumps(json_data)
-            command.append(f"-d '{json_str}'")
-        elif data:
-            if "Content-Type" not in headers:
-                command.append("-H 'Content-Type: application/x-www-form-urlencoded'")
-            data_str = "&".join([f"{key}={value}" for key, value in data.items()])
-            command.append(f"-d '{data_str}'")
-        elif form_data:
-            for key, value in form_data.items():
-                command.append(f"-F '{key}={value}'")
-
-        # Build URL with query parameters
-        if query_params:
-            query_str = "&".join([f"{key}={value}" for key, value in query_params.items()])
-            url = f"{url}{'?' if '?' not in url else '&'}{query_str}"
-
-        # Add URL
-        command.append(f"'{url}'")
-
-        return " ".join(command)
-
-    @staticmethod
-    def generate_from_request(request: Dict[str, Any]) -> str:
-        """Generate curl command from Talkie request.
-
-        Args:
-            request: Dictionary with request parameters
-
-        Returns:
-            str: curl command
-        """
-        return CurlGenerator.generate_curl(
-            method=request.get("method", "GET"),
-            url=request.get("url", ""),
-            headers=request.get("headers", {}),
-            data=request.get("data", {}),
-            json_data=request.get("json", {}),
-            query_params=request.get("params", {}),
-            verbose=request.get("verbose", False),
-            insecure=request.get("insecure", False),
-        )
-
-    @staticmethod
-    def display_curl(curl_command: str, console: Optional[Console] = None) -> None:
-        """Display curl command with syntax highlighting.
-
-        Args:
-            curl_command: curl command
-            console: Rich console for output
-        """
-        if console is None:
-            console = Console()
-
-        syntax = Syntax(curl_command, "bash", theme="monokai", word_wrap=True)
-        console.print(syntax)
-
-
-def convert_dict_to_curl_args(data: Dict[str, Any]) -> List[str]:
-    """Convert dictionary to curl arguments.
+def generate_curl_command(
+    method: str,
+    url: str,
+    headers: Optional[Dict[str, str]] = None,
+    data: Optional[Union[str, Dict[str, Any]]] = None,
+    params: Optional[Dict[str, str]] = None,
+    files: Optional[Dict[str, str]] = None,
+    cookies: Optional[Dict[str, str]] = None,
+    timeout: Optional[int] = None,
+    follow_redirects: bool = True,
+    verbose: bool = False,
+    insecure: bool = False
+) -> str:
+    """Generate curl command from HTTP request parameters.
 
     Args:
-        data: Dictionary with parameters
+        method: HTTP method (GET, POST, PUT, DELETE, etc.)
+        url: Request URL
+        headers: Request headers
+        data: Request body data
+        params: URL query parameters
+        files: Files to upload (for multipart/form-data)
+        cookies: Cookies to send
+        timeout: Request timeout in seconds
+        follow_redirects: Whether to follow redirects
+        verbose: Whether to use verbose output
+        insecure: Whether to skip SSL certificate verification
 
     Returns:
-        List[str]: List of arguments
+        str: Generated curl command
     """
-    args = []
-    for key, value in data.items():
-        if isinstance(value, bool):
-            args.append(f"{key}={str(value).lower()}")
-        elif isinstance(value, (int, float)):
-            args.append(f"{key}={value}")
+    # Start with curl command
+    cmd_parts = ["curl"]
+
+    # Add method
+    if method.upper() != "GET":
+        cmd_parts.append(f"-X {method.upper()}")
+
+    # Add headers
+    if headers:
+        for key, value in headers.items():
+            # Escape quotes in header values
+            escaped_value = value.replace('"', '\\"')
+            cmd_parts.append(f'-H "{key}: {escaped_value}"')
+
+    # Add cookies
+    if cookies:
+        cookie_string = "; ".join([f"{k}={v}" for k, v in cookies.items()])
+        cmd_parts.append(f'-b "{cookie_string}"')
+
+    # Add data/body
+    if data:
+        if isinstance(data, dict):
+            # Convert dict to JSON
+            json_data = json.dumps(data, ensure_ascii=False)
+            cmd_parts.append(f'-d \'{json_data}\'')
         else:
-            args.append(f"{key}={shlex.quote(str(value))}")
-    return args
+            # String data
+            cmd_parts.append(f'-d \'{data}\'')
+
+    # Add files (for multipart/form-data)
+    if files:
+        for field_name, file_path in files.items():
+            cmd_parts.append(f'-F "{field_name}=@{file_path}"')
+
+    # Add query parameters
+    if params:
+        # Parse existing URL to get base
+        parsed_url = urlparse(url)
+        query_params = parse_qs(parsed_url.query)
+        
+        # Add new parameters
+        for key, value in params.items():
+            query_params[key] = [value]
+        
+        # Rebuild URL with parameters
+        new_query = "&".join([f"{k}={v[0]}" for k, v in query_params.items()])
+        if new_query:
+            separator = "&" if parsed_url.query else "?"
+            url = f"{url}{separator}{new_query}"
+
+    # Add options
+    if timeout:
+        cmd_parts.append(f"--max-time {timeout}")
+
+    if not follow_redirects:
+        cmd_parts.append("--location-trusted")
+
+    if verbose:
+        cmd_parts.append("-v")
+
+    if insecure:
+        cmd_parts.append("-k")
+
+    # Add URL
+    cmd_parts.append(f'"{url}"')
+
+    return " ".join(cmd_parts)
+
+
+def generate_curl_from_request(
+    method: str,
+    url: str,
+    headers: Optional[Dict[str, str]] = None,
+    data: Optional[Union[str, Dict[str, Any]]] = None,
+    **kwargs
+) -> str:
+    """Generate curl command from request parameters.
+
+    Args:
+        method: HTTP method
+        url: Request URL
+        headers: Request headers
+        data: Request data
+        **kwargs: Additional curl options
+
+    Returns:
+        str: Generated curl command
+    """
+    return generate_curl_command(
+        method=method,
+        url=url,
+        headers=headers,
+        data=data,
+        **kwargs
+    )
+
+
+def format_curl_for_display(curl_command: str, max_length: int = 100) -> str:
+    """Format curl command for better display.
+
+    Args:
+        curl_command: Generated curl command
+        max_length: Maximum line length
+
+    Returns:
+        str: Formatted curl command
+    """
+    if len(curl_command) <= max_length:
+        return curl_command
+
+    # Split long commands into multiple lines
+    parts = curl_command.split()
+    lines = []
+    current_line = []
+
+    for part in parts:
+        if len(" ".join(current_line + [part])) > max_length:
+            if current_line:
+                lines.append(" ".join(current_line))
+                current_line = [part]
+            else:
+                lines.append(part)
+        else:
+            current_line.append(part)
+
+    if current_line:
+        lines.append(" ".join(current_line))
+
+    return " \\\n  ".join(lines)
+
+
+def extract_curl_options(curl_command: str) -> Dict[str, Any]:
+    """Extract options from curl command.
+
+    Args:
+        curl_command: Curl command string
+
+    Returns:
+        Dict[str, Any]: Extracted options
+    """
+    options = {}
+    parts = curl_command.split()
+
+    i = 0
+    while i < len(parts):
+        part = parts[i]
+        
+        if part.startswith("-"):
+            if part == "-X":
+                options["method"] = parts[i + 1]
+                i += 1
+            elif part == "-H":
+                header = parts[i + 1]
+                if ":" in header:
+                    key, value = header.split(":", 1)
+                    options.setdefault("headers", {})[key.strip()] = value.strip()
+                i += 1
+            elif part == "-d":
+                options["data"] = parts[i + 1]
+                i += 1
+            elif part == "-b":
+                options["cookies"] = parts[i + 1]
+                i += 1
+            elif part == "-k":
+                options["insecure"] = True
+            elif part == "-v":
+                options["verbose"] = True
+            elif part.startswith("--max-time"):
+                options["timeout"] = int(part.split("=")[1])
+        
+        i += 1
+
+    return options

@@ -1,6 +1,5 @@
 """Module for auto-formatting various data types."""
 
-import html
 import json
 import re
 from typing import Any, Dict, Optional, Union
@@ -146,7 +145,8 @@ class DataFormatter:
 
             # Check if a new tag is opened
             # Проверяем, открывается ли новый тег
-            if not line.startswith("</") and not line.endswith("/>") and "</" not in line and line.startswith("<"):
+            if (not line.startswith("</") and not line.endswith("/>") and
+                "</" not in line and line.startswith("<")):
                 indent += 1
 
         return "\n".join(result)
@@ -220,9 +220,10 @@ class DataFormatter:
         ):
             return self.format_xml(data)
 
-        elif format_type == "html" or content_type == "text/html" or (
-            data and data.strip().startswith("<") and data.strip().endswith(">") and ("<html" in data or "</html>" in data)
-        ):
+        elif (format_type == "html" or content_type == "text/html" or
+              (data and data.strip().startswith("<") and
+               data.strip().endswith(">") and
+               ("<html" in data or "</html>" in data))):
             return self.format_html(data)
 
         elif format_type == "markdown" and content_type == "text/html":
@@ -231,28 +232,110 @@ class DataFormatter:
         # Возвращаем данные как есть
         return data
 
+    def format_yaml(self, data: str, colorize: bool = True) -> str:
+        """Format YAML data with indentation and highlighting.
+
+        Args:
+            data: YAML string to format
+            colorize: Use color highlighting
+
+        Returns:
+            str: Formatted YAML
+        """
+        try:
+            import yaml
+            # Parse and re-dump YAML for proper formatting
+            parsed = yaml.safe_load(data)
+            formatted = yaml.dump(parsed, default_flow_style=False, indent=2)
+            return formatted
+        except Exception:
+            # If parsing fails, return original string
+            return data
+
+    def format_sql(self, data: str, colorize: bool = True) -> str:
+        """Format SQL data with highlighting.
+
+        Args:
+            data: SQL string to format
+            colorize: Use color highlighting
+
+        Returns:
+            str: Formatted SQL
+        """
+        if colorize:
+            try:
+                from pygments import highlight
+                from pygments.lexers import SqlLexer
+                from pygments.formatters import TerminalFormatter
+                
+                return highlight(data, SqlLexer(), TerminalFormatter())
+            except Exception:
+                pass
+        
+        return data
+
+    def format_auto(self, data: str, colorize: bool = True) -> str:
+        """Automatically detect and format data.
+
+        Args:
+            data: Data to format
+            colorize: Use color highlighting
+
+        Returns:
+            str: Formatted data
+        """
+        # Try JSON first
+        if data.strip().startswith(("{", "[")) and data.strip().endswith(("]", "}")):
+            return self.format_json(data, colorize)
+        
+        # Try XML
+        if data.strip().startswith("<") and data.strip().endswith(">") and "?xml" in data:
+            return self.format_xml(data, colorize)
+        
+        # Try HTML
+        if data.strip().startswith("<") and data.strip().endswith(">") and ("<html" in data or "</html>" in data):
+            return self.format_html(data, colorize)
+        
+        # Try YAML
+        if ":" in data and "\n" in data and not data.strip().startswith("<"):
+            return self.format_yaml(data, colorize)
+        
+        # Try SQL
+        if any(keyword in data.upper() for keyword in ["SELECT", "INSERT", "UPDATE", "DELETE", "CREATE"]):
+            return self.format_sql(data, colorize)
+        
+        # Return as-is if no format detected
+        return data
+
+
 # Создаем глобальный экземпляр форматтера
 _formatter = DataFormatter()
+
 
 def format_json(data: Union[str, Dict[str, Any]], colorize: bool = False) -> str:
     """Форматировать JSON-данные с отступами и подсветкой."""
     return _formatter.format_json(data, colorize)
 
+
 def format_xml(data: str, colorize: bool = False) -> str:
     """Форматировать XML-данные с отступами и подсветкой."""
     return _formatter.format_xml(data, colorize)
+
 
 def format_html(data: str, to_markdown: bool = False, colorize: bool = False) -> str:
     """Форматировать HTML-данные с отступами и подсветкой."""
     return _formatter.format_html(data, to_markdown, colorize)
 
+
 def display_formatted(data: str, content_type: str) -> None:
     """Отобразить отформатированные данные с подсветкой синтаксиса."""
     _formatter.display_formatted(data, content_type)
 
+
 def format_data(data: str, content_type: str, format_type: Optional[str] = None) -> str:
     """Автоматически форматировать данные в зависимости от типа."""
     return _formatter.format_data(data, content_type, format_type)
+
 
 def detect_content_type(content: str) -> str:
     """Определить тип контента на основе его содержимого.
@@ -289,6 +372,7 @@ def detect_content_type(content: str) -> str:
 
     return "text"
 
+
 def html_to_markdown(content: str) -> str:
     """Преобразовать HTML в Markdown.
 
@@ -299,6 +383,7 @@ def html_to_markdown(content: str) -> str:
         str: Markdown-строка
     """
     return _formatter.format_html(content, to_markdown=True)
+
 
 def format_content(content: str, content_type: Optional[str] = None) -> str:
     """Форматировать содержимое с автоопределением типа.

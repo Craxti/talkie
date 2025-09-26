@@ -10,6 +10,17 @@ class ValidationError(Exception):
     pass
 
 
+# Convenience functions for direct import
+def validate_url(url: str) -> str:
+    """Validate URL format."""
+    return InputValidator.validate_url(url)
+
+
+def validate_json(data: str) -> Dict[str, Any]:
+    """Validate JSON format."""
+    return InputValidator.validate_json(data)
+
+
 class InputValidator:
     """Utility class for validating command line inputs."""
 
@@ -257,3 +268,23 @@ class InputValidator:
             )
 
         return method
+
+    @staticmethod
+    def validate_json(data: str) -> Dict[str, Any]:
+        """
+        Validate JSON format.
+
+        Args:
+            data (str): JSON string
+
+        Returns:
+            Dict[str, Any]: Parsed JSON data
+
+        Raises:
+            ValidationError: If JSON is invalid
+        """
+        try:
+            import json
+            return json.loads(data)
+        except json.JSONDecodeError as e:
+            raise ValidationError(f"Invalid JSON format: {e}")

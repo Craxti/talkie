@@ -1,1 +1,1 @@
-"""CLI subpackage for Talkie."""
+"""CLI module for Talkie."""

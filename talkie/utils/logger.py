@@ -8,8 +8,7 @@ import json
 import threading
 import traceback
 from datetime import datetime
-from pathlib import Path
-from typing import Optional, Dict, Any, List
+from typing import Optional, Dict, Any
 import uuid
 from contextlib import contextmanager
 
@@ -241,7 +240,8 @@ class StructuredLogger:
             self.clear_context()
             self.set_context(**old_context)
 
-    def _log_with_context(self, level: int, message: str, extra_data: Optional[Dict[str, Any]] = None):
+    def _log_with_context(self, level: int, message: str,
+                         extra_data: Optional[Dict[str, Any]] = None):
         """Log message with context."""
         context = self.get_context()
 
@@ -362,7 +362,8 @@ class StructuredLogger:
             level = logging.INFO if 200 <= status_code < 300 else logging.WARNING
             self._log_with_context(
                 level,
-                f"HTTP response {status_code} ({duration:.3f}s)" if duration else f"HTTP response {status_code}",
+                (f"HTTP response {status_code} ({duration:.3f}s)"
+                 if duration else f"HTTP response {status_code}"),
                 response_data
             )
 
@@ -407,8 +408,9 @@ class StructuredLogger:
                 "p95": sorted(durations)[int(len(durations) * 0.95)] if durations else 0
             },
             "cache_efficiency": {
-                "hit_rate": self.request_counters["cache_hits"] / max(1,
-                    self.request_counters["cache_hits"] + self.request_counters["cache_misses"]) * 100
+                "hit_rate": (self.request_counters["cache_hits"] /
+                            max(1, self.request_counters["cache_hits"] +
+                                self.request_counters["cache_misses"]) * 100)
             }
         }
 
@@ -488,3 +490,28 @@ def setup_debug_logging(enable_debug: bool = True, log_file: Optional[str] = Non
                   for h in root_logger.handlers):
             root_logger.addHandler(debug_handler)
             root_logger.setLevel(logging.DEBUG)
+
+
+# Convenience functions for direct import
+def get_logger():
+    """Get logger instance."""
+    return logger
+
+
+def log_request(method: str, url: str, headers: Optional[Dict[str, str]] = None,
+                body: Optional[str] = None, params: Optional[Dict[str, Any]] = None):
+    """Log HTTP request."""
+    logger.info(f"Request: {method} {url}")
+
+
+def log_response(status_code: int, body: str, headers: Optional[Dict[str, str]] = None):
+    """Log HTTP response."""
+    logger.info(f"Response: {status_code} - {body[:100]}...")
+
+
+def log_error(error: Exception, message: Optional[str] = None, context: Optional[Dict[str, Any]] = None):
+    """Log error."""
+    if message:
+        logger.error(f"{message}: {error}")
+    else:
+        logger.error(f"Error: {error}")

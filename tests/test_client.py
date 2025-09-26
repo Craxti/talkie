@@ -1,125 +1,196 @@
-"""Тесты для HTTP-клиента."""
+"""Tests for HTTP client."""
 
 import pytest
-from unittest.mock import patch, MagicMock
-
+from unittest.mock import Mock, patch
+import httpx
 from talkie.core.client import HttpClient
+from talkie.core.async_client import AsyncHttpClient
 
 
-@pytest.fixture
-def mock_response():
-    """Фикстура для мок-ответа."""
-    response = MagicMock()
-    response.status_code = 200
-    response.reason_phrase = "OK"
-    response.elapsed.total_seconds.return_value = 0.1
-    response.headers = {"Content-Type": "application/json"}
-    response.content = b'{"id": 1, "name": "Test"}'
-    response.text = '{"id": 1, "name": "Test"}'
-    response.json.return_value = {"id": 1, "name": "Test"}
-    return response
+class TestHttpClient:
+    """Test HTTP client."""
+    
+    def test_client_initialization(self):
+        """Test client initialization."""
+        client = HttpClient()
+        assert client.client is None
 
+    def test_context_manager(self):
+        """Test context manager functionality."""
+        client = HttpClient()
+        assert client.client is None
+        
+        with client:
+            assert client.client is not None
+            assert isinstance(client.client, httpx.Client)
+        
+        # Client should be closed after context
+        assert client.client is None
 
-def test_http_client_init():
-    """Тест инициализации HttpClient."""
-    client = HttpClient()
-    assert client.client is not None
-
-
-@patch("httpx.Client.request")
-def test_client_get_request(mock_request, mock_response):
-    """Тест выполнения GET-запроса."""
-    mock_request.return_value = mock_response
-
-    client = HttpClient()
-
-    request = {
-        "method": "GET",
-        "url": "https://example.com/api",
-        "headers": {"Accept": "application/json"},
-        "params": {"page": "1"},
-        "timeout": 30.0
-    }
-
-    response = client.send(request)
-
-    assert response.status_code == 200
-    assert response.headers["Content-Type"] == "application/json"
-    assert response.json() == {"id": 1, "name": "Test"}
-
-    # Проверка, что метод request был вызван с правильными параметрами
-    mock_request.assert_called_once()
-    args, kwargs = mock_request.call_args
-
-    assert kwargs["method"] == "GET"
-    assert kwargs["url"] == "https://example.com/api"
-    assert kwargs["headers"] == {"Accept": "application/json"}
-    assert kwargs["params"] == {"page": "1"}
-
-
-@patch("httpx.Client.request")
-def test_client_post_request_json(mock_request, mock_response):
-    """Тест выполнения POST-запроса с JSON."""
-    mock_request.return_value = mock_response
-
-    client = HttpClient()
-
-    request = {
-        "method": "POST",
-        "url": "https://example.com/api/users",
-        "headers": {"Content-Type": "application/json"},
-        "json": {"name": "Test User", "age": 30},
-        "timeout": 30.0
-    }
-
-    response = client.send(request)
-
-    assert response.status_code == 200
-
-    # Проверка, что метод request был вызван с правильными параметрами
-    mock_request.assert_called_once()
-    args, kwargs = mock_request.call_args
-
-    assert kwargs["method"] == "POST"
-    assert kwargs["url"] == "https://example.com/api/users"
-    assert kwargs["headers"] == {"Content-Type": "application/json"}
-    assert kwargs["json"] == {"name": "Test User", "age": 30}
-
-
-@patch("httpx.Client.request")
-def test_client_post_request_form(mock_request, mock_response):
-    """Тест выполнения POST-запроса с данными формы."""
-    mock_request.return_value = mock_response
-
-    client = HttpClient()
-
-    request = {
-        "method": "POST",
-        "url": "https://example.com/api/login",
-        "headers": {"Content-Type": "application/x-www-form-urlencoded"},
-        "data": {"username": "test", "password": "password123"},
-        "timeout": 30.0
-    }
-
-    response = client.send(request)
-
-    assert response.status_code == 200
-
-    # Проверка, что метод request был вызван с правильными параметрами
-    mock_request.assert_called_once()
-    args, kwargs = mock_request.call_args
-
-    assert kwargs["method"] == "POST"
-    assert kwargs["url"] == "https://example.com/api/login"
-    assert kwargs["headers"] == {"Content-Type": "application/x-www-form-urlencoded"}
-    assert kwargs["data"] == {"username": "test", "password": "password123"}
-
-
-def test_client_context_manager():
-    """Тест работы HttpClient как контекстного менеджера."""
-    with patch.object(HttpClient, "close") as mock_close:
+    def test_request_success(self):
+        """Test successful HTTP request."""
         with HttpClient() as client:
-            assert isinstance(client, HttpClient)
+            # Mock the httpx client
+            mock_response = Mock()
+            mock_response.status_code = 200
+            mock_response.headers = {"Content-Type": "application/json"}
+            mock_response.text = '{"result": "success"}'
+            
+            client.client.request = Mock(return_value=mock_response)
+            
+            result = client.request("GET", "https://example.com")
+            
+            assert result["status"] == 200
+            assert result["headers"]["Content-Type"] == "application/json"
+            assert result["body"] == '{"result": "success"}'
 
-        # Проверка, что метод close был вызван
-        mock_close.assert_called_once()
+    def test_request_without_context(self):
+        """Test request without context manager."""
+        client = HttpClient()
+        
+        with pytest.raises(RuntimeError, match="Client not initialized"):
+            client.request("GET", "https://example.com")
+
+    def test_request_with_kwargs(self):
+        """Test request with additional kwargs."""
+        with HttpClient() as client:
+            mock_response = Mock()
+            mock_response.status_code = 201
+            mock_response.headers = {"Location": "https://example.com/resource/1"}
+            mock_response.text = '{"id": 1}'
+            
+            client.client.request = Mock(return_value=mock_response)
+            
+            result = client.request(
+                "POST", 
+                "https://example.com",
+                json={"name": "test"},
+                headers={"Authorization": "Bearer token"}
+            )
+            
+            assert result["status"] == 201
+            assert result["headers"]["Location"] == "https://example.com/resource/1"
+            assert result["body"] == '{"id": 1}'
+            
+            # Verify the request was called with correct parameters
+            client.client.request.assert_called_once_with(
+                "POST",
+                "https://example.com",
+                json={"name": "test"},
+                headers={"Authorization": "Bearer token"}
+            )
+
+    def test_request_error_handling(self):
+        """Test request error handling."""
+        with HttpClient() as client:
+            # Mock httpx to raise an exception
+            client.client.request = Mock(side_effect=httpx.RequestError("Network error"))
+            
+            with pytest.raises(httpx.RequestError):
+                client.request("GET", "https://example.com")
+
+
+class TestAsyncHttpClient:
+    """Test async HTTP client."""
+    
+    def test_async_client_initialization(self):
+        """Test async client initialization."""
+        client = AsyncHttpClient()
+        assert client.client is None
+
+    @pytest.mark.asyncio
+    async def test_async_context_manager(self):
+        """Test async context manager functionality."""
+        client = AsyncHttpClient()
+        assert client.client is None
+        
+        async with client:
+            assert client.client is not None
+            assert isinstance(client.client, httpx.AsyncClient)
+        
+        # Client should be closed after context
+        assert client.client is None
+
+    @pytest.mark.asyncio
+    async def test_async_request_success(self):
+        """Test successful async HTTP request."""
+        async with AsyncHttpClient() as client:
+            # Mock the httpx async client
+            mock_response = Mock()
+            mock_response.status_code = 200
+            mock_response.headers = {"Content-Type": "application/json"}
+            mock_response.text = '{"result": "success"}'
+            
+            # Create async mock
+            async def mock_request(*args, **kwargs):
+                return mock_response
+            
+            client.client.request = mock_request
+            
+            result = await client.request("GET", "https://example.com")
+            
+            assert result["status"] == 200
+            assert result["headers"]["Content-Type"] == "application/json"
+            assert result["body"] == '{"result": "success"}'
+
+    @pytest.mark.asyncio
+    async def test_async_request_without_context(self):
+        """Test async request without context manager."""
+        client = AsyncHttpClient()
+        
+        with pytest.raises(RuntimeError, match="Client not initialized"):
+            await client.request("GET", "https://example.com")
+
+    @pytest.mark.asyncio
+    async def test_async_request_with_kwargs(self):
+        """Test async request with additional kwargs."""
+        async with AsyncHttpClient() as client:
+            mock_response = Mock()
+            mock_response.status_code = 201
+            mock_response.headers = {"Location": "https://example.com/resource/1"}
+            mock_response.text = '{"id": 1}'
+            
+            # Create async mock
+            async def mock_request(*args, **kwargs):
+                return mock_response
+            
+            client.client.request = mock_request
+            
+            result = await client.request(
+                "POST", 
+                "https://example.com",
+                json={"name": "test"},
+                headers={"Authorization": "Bearer token"}
+            )
+            
+            assert result["status"] == 201
+            assert result["headers"]["Location"] == "https://example.com/resource/1"
+            assert result["body"] == '{"id": 1}'
+
+    @pytest.mark.asyncio
+    async def test_async_request_error_handling(self):
+        """Test async request error handling."""
+        async with AsyncHttpClient() as client:
+            # Mock httpx to raise an exception
+            client.client.request = Mock(side_effect=httpx.RequestError("Network error"))
+            
+            with pytest.raises(httpx.RequestError):
+                await client.request("GET", "https://example.com")
+
+
+class TestClientImports:
+    """Test client imports."""
+    
+    def test_client_imports(self):
+        """Test client imports."""
+        from talkie.core import HttpClient, AsyncHttpClient
+        assert HttpClient is not None
+        assert AsyncHttpClient is not None
+
+    def test_client_module_imports(self):
+        """Test client module imports."""
+        from talkie.core.client import HttpClient
+        from talkie.core.async_client import AsyncHttpClient
+        
+        assert HttpClient is not None
+        assert AsyncHttpClient is not None

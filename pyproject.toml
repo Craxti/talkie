@@ -48,6 +48,7 @@ dev = [
     "black>=23.3.0",
     "isort>=5.12.0",
     "flake8>=6.0.0",
+    "pylint>=3.0.0",
 ]
 
 [project.scripts]
@@ -94,4 +95,22 @@ exclude_lines = [
     "if TYPE_CHECKING:",
     "pass",
 ]
-show_missing = true 
+show_missing = true
+
+[tool.pylint.messages_control]
+disable = [
+    "C0114",  # missing-module-docstring
+    "C0116",  # missing-function-docstring
+    "R0903",  # too-few-public-methods
+    "R0913",  # too-many-arguments
+    "W0613",  # unused-argument
+]
+
+[tool.pylint.format]
+max-line-length = 88
+
+[tool.pylint.design]
+max-args = 7
+max-locals = 20
+max-branches = 15
+max-statements = 60 

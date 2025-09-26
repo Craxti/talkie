@@ -3,7 +3,7 @@
 import os
 import json
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Dict, Optional
 
 from pydantic import BaseModel, Field
 
@@ -60,7 +60,7 @@ class Config(BaseModel):
         config_path.parent.mkdir(parents=True, exist_ok=True)
 
         with open(config_path, "w", encoding="utf-8") as f:
-            f.write(self.json(indent=2, ensure_ascii=False))
+            f.write(self.model_dump_json(indent=2))
 
     def get_active_environment(self) -> Optional[Environment]:
         """Получить активное окружение.
@@ -98,3 +98,19 @@ class Config(BaseModel):
         config = cls()
         config.save()
         return config
+
+
+# Convenience functions for direct import
+def load_config() -> Config:
+    """Load configuration."""
+    return Config.load_default()
+
+
+def save_config(config: Config) -> None:
+    """Save configuration."""
+    config.save()
+
+
+def get_config_path() -> Path:
+    """Get configuration file path."""
+    return Config._get_config_path()

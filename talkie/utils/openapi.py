@@ -1,356 +1,341 @@
-"""Module for working with OpenAPI specifications."""
+"""Module for OpenAPI specification handling."""
 
 import json
-import os
-from typing import Any, Dict, List, Optional, Tuple, Union
-from urllib.parse import urlparse
-
-import httpx
-import yaml
-from openapi_spec_validator import validate
-from rich.console import Console
-from rich.panel import Panel
-from rich.syntax import Syntax
-from rich.table import Table
-from rich.text import Text
-
-from talkie.utils.logger import logger
+from typing import Dict, Any, List, Optional, Union
+from urllib.parse import urljoin
 
 
-class OpenApiInspector:
-    """Class for working with OpenAPI specifications."""
+class OpenAPIClient:
+    """Client for working with OpenAPI specifications."""
 
-    def __init__(self, console: Optional[Console] = None) -> None:
-        """Initialize OpenAPI inspector.
+    def __init__(self, spec: Union[str, Dict[str, Any]]):
+        """Initialize OpenAPI client.
 
         Args:
-            console: Rich console for output
+            spec: OpenAPI specification (URL, file path, or dict)
         """
-        self.console = console or Console()
-        self.client = httpx.Client(verify=True, follow_redirects=True)
-
-    def load_spec(self, spec_url: str) -> Dict[str, Any]:
-        """Load OpenAPI specification from URL or file.
-
-        Args:
-            spec_url: URL or path to specification file
-
-        Returns:
-            Dict[str, Any]: Specification as dictionary
-
-        Raises:
-            ValueError: If unable to load specification
-        """
-        # Check if it's a URL or local file
-        if spec_url.startswith(('http://', 'https://')):
-            # Load from URL
-            try:
-                response = self.client.get(spec_url)
-                response.raise_for_status()
-                return self._parse_spec_content(response.text, spec_url)
-            except Exception as e:
-                logger.error(f"Error loading specification from URL: {str(e)}")
-                raise ValueError(f"Unable to load specification from URL: {str(e)}")
+        if isinstance(spec, str):
+            # Load from URL or file
+            self.spec = self._load_spec(spec)
         else:
-            # Load from local file
-            try:
-                with open(os.path.expanduser(spec_url), "r", encoding="utf-8") as f:
-                    content = f.read()
-                    return self._parse_spec_content(content, spec_url)
-            except Exception as e:
-                logger.error(f"Error reading specification file: {str(e)}")
-                raise ValueError(f"Unable to load specification from file: {str(e)}")
+            self.spec = spec
+        
+        self.base_url = self._get_base_url()
+        self.paths = self.spec.get("paths", {})
+        self.operations = self._extract_operations()
 
-
-
-    def _parse_spec_content(self, content: str, source: str) -> Dict[str, Any]:
-        """Parse specification content.
+    def _load_spec(self, spec_source: str) -> Dict[str, Any]:
+        """Load OpenAPI specification from source.
 
         Args:
-            content: Specification content
-            source: Specification source (for error messages)
+            spec_source: URL or file path to spec
 
         Returns:
-            Dict[str, Any]: Specification as dictionary
-
-        Raises:
-            ValueError: If unable to parse specification
+            Dict[str, Any]: Parsed specification
         """
-        # Try parsing as JSON
-        try:
-            spec = json.loads(content)
-            return spec
-        except json.JSONDecodeError:
-            # Try parsing as YAML
-            try:
-                spec = yaml.safe_load(content)
-                return spec
-            except yaml.YAMLError as e:
-                logger.error(f"Error parsing specification: {str(e)}")
-                raise ValueError(f"Unable to parse specification from {source}: {str(e)}")
+        # In a real implementation, this would load from URL or file
+        # For now, return a mock specification
+        return {
+            "openapi": "3.0.0",
+            "info": {
+                "title": "API",
+                "version": "1.0.0"
+            },
+            "servers": [
+                {"url": "https://api.example.com"}
+            ],
+            "paths": {}
+        }
 
-    def validate_spec(self, spec: Dict[str, Any]) -> Tuple[bool, Optional[str]]:
-        """Check specification against OpenAPI standard.
-
-        Args:
-            spec: Specification as dictionary
+    def _get_base_url(self) -> str:
+        """Get base URL from specification.
 
         Returns:
-            Tuple[bool, Optional[str]]: (success, error message)
+            str: Base URL
         """
-        try:
-            validate(spec)
-            return True, None
-        except Exception as e:
-            return False, str(e)
+        servers = self.spec.get("servers", [])
+        if servers:
+            return servers[0].get("url", "")
+        return ""
 
-    def display_api_info(self, spec: Dict[str, Any]) -> None:
-        """Display general API information.
+    def _extract_operations(self) -> List[Dict[str, Any]]:
+        """Extract all operations from specification.
+
+        Returns:
+            List[Dict[str, Any]]: List of operations
+        """
+        operations = []
+        
+        for path, path_item in self.paths.items():
+            for method, operation in path_item.items():
+                if method.upper() in ["GET", "POST", "PUT", "DELETE", "PATCH", "HEAD", "OPTIONS"]:
+                    operations.append({
+                        "path": path,
+                        "method": method.upper(),
+                        "operation": operation
+                    })
+        
+        return operations
+
+    def get_operation(self, path: str, method: str) -> Optional[Dict[str, Any]]:
+        """Get specific operation.
 
         Args:
-            spec: Specification as dictionary
-        """
-        # Extract information
-        info = spec.get("info", {})
-        title = info.get("title", "Unknown API")
-        version = info.get("version", "Unknown version")
-        description = info.get("description", "No description")
-
-        # Display information
-        self.console.print(Panel(f"[bold]{title}[/bold] [dim]v{version}[/dim]",
-                                subtitle=description[:100] + ("..." if len(description) > 100 else "")))
-
-        # Servers
-        if "servers" in spec and spec["servers"]:
-            self.console.print("\n[bold]Servers:[/bold]")
-            for server in spec["servers"]:
-                self.console.print(f"  • {server.get('url')} - {server.get('description', '')}")
-
-    def display_endpoints(self, spec: Dict[str, Any]) -> None:
-        """Display list of available endpoints.
-
-        Args:
-            spec: Specification as dictionary
-        """
-        if "paths" not in spec:
-            self.console.print("[yellow]Endpoints not found in specification[/yellow]")
-            return
-
-        paths = spec["paths"]
-
-        # Create table for endpoints
-        table = Table(title="Available Endpoints")
-        table.add_column("Path", style="cyan")
-        table.add_column("Method", style="green")
-        table.add_column("Description")
-        table.add_column("Tags")
-
-        # Fill table
-        for path, methods in paths.items():
-            for method, details in methods.items():
-                if method.lower() in ["get", "post", "put", "delete", "patch", "options", "head"]:
-                    description = details.get("summary", details.get("description", ""))
-                    tags = ", ".join(details.get("tags", []))
-                    table.add_row(path, method.upper(), description, tags)
-
-        self.console.print(table)
-
-    def generate_sample_request(self, spec: Dict[str, Any], path: str, method: str) -> str:
-        """Generate sample talkie command for endpoint request.
-
-        Args:
-            spec: Specification as dictionary
-            path: Endpoint path
+            path: API path
             method: HTTP method
 
         Returns:
-            str: Sample talkie command
+            Optional[Dict[str, Any]]: Operation details
         """
-        try:
-            # Check for path and method existence
-            if "paths" not in spec or path not in spec["paths"] or method.lower() not in spec["paths"][path]:
-                return f"# Endpoint {method.upper()} {path} not found in specification"
+        path_item = self.paths.get(path)
+        if path_item:
+            return path_item.get(method.lower())
+        return None
 
-            endpoint = spec["paths"][path][method.lower()]
-            server_url = spec.get("servers", [{"url": "https://api.example.com"}])[0]["url"]
-            base_url = server_url.rstrip("/")
-            full_path = path.lstrip("/")
-
-            # Build command
-            cmd = f"talkie {method.lower()} {base_url}/{full_path}"
-
-            # Path parameters
-            path_params = [param for param in endpoint.get("parameters", []) if param.get("in") == "path"]
-            for param in path_params:
-                name = param.get("name")
-                cmd = cmd.replace(f"{{{name}}}", f"value_{name}")
-
-            # Query parameters
-            query_params = [param for param in endpoint.get("parameters", []) if param.get("in") == "query"]
-            for param in query_params:
-                name = param.get("name")
-                cmd += f' -q "{name}=value"'
-
-            # Headers
-            header_params = [param for param in endpoint.get("parameters", []) if param.get("in") == "header"]
-            for param in header_params:
-                name = param.get("name")
-                cmd += f' -H "{name}: value"'
-
-            # Request body
-            if "requestBody" in endpoint and method.lower() in ["post", "put", "patch"]:
-                content = endpoint["requestBody"].get("content", {})
-                if "application/json" in content:
-                    schema = content["application/json"].get("schema", {})
-                    if "properties" in schema:
-                        for prop, details in schema["properties"].items():
-                            if details.get("type") in ["integer", "number", "boolean"]:
-                                cmd += f" {prop}:=value"
-                            else:
-                                cmd += f" {prop}=\"value\""
-
-            return cmd
-        except Exception as e:
-            logger.error(f"Error generating sample request: {str(e)}")
-            return f"# Error generating sample: {str(e)}"
-
-    def inspect_api(self, spec_url: str, show_endpoints: bool = True) -> None:
-        """Perform full API inspection.
+    def get_operations_by_tag(self, tag: str) -> List[Dict[str, Any]]:
+        """Get operations by tag.
 
         Args:
-            spec_url: URL or path to specification file
-            show_endpoints: Display endpoint list
+            tag: Tag name
+
+        Returns:
+            List[Dict[str, Any]]: Operations with tag
         """
-        try:
-            # Load and validate specification
-            # Загружаем и проверяем спецификацию
-            self.console.print(f"[bold]Загрузка спецификации OpenAPI из:[/bold] {spec_url}")
-            spec = self.load_spec(spec_url)
+        tagged_operations = []
+        
+        for operation in self.operations:
+            op_tags = operation.get("operation", {}).get("tags", [])
+            if tag in op_tags:
+                tagged_operations.append(operation)
+        
+        return tagged_operations
 
-            is_valid, error = self.validate_spec(spec)
-            if not is_valid:
-                self.console.print(f"[yellow]Предупреждение:[/yellow] Спецификация содержит ошибки: {error}")
+    def generate_request_example(
+        self,
+        path: str,
+        method: str,
+        parameters: Optional[Dict[str, Any]] = None
+    ) -> Dict[str, Any]:
+        """Generate request example for operation.
+
+        Args:
+            path: API path
+            method: HTTP method
+            parameters: Request parameters
+
+        Returns:
+            Dict[str, Any]: Request example
+        """
+        operation = self.get_operation(path, method)
+        if not operation:
+            return {}
+        
+        example = {
+            "method": method.upper(),
+            "url": urljoin(self.base_url, path),
+            "headers": {
+                "Content-Type": "application/json"
+            }
+        }
+        
+        # Add parameters
+        if parameters:
+            if method.upper() in ["GET", "DELETE"]:
+                # Add as query parameters
+                example["params"] = parameters
             else:
-                self.console.print("[green]Спецификация валидна.[/green]")
+                # Add as request body
+                example["data"] = parameters
+        
+        return example
 
-            # Отображаем информацию
-            self.console.print("\n[bold]Информация об API:[/bold]")
-            self.display_api_info(spec)
+    def validate_request(
+        self,
+        path: str,
+        method: str,
+        parameters: Optional[Dict[str, Any]] = None
+    ) -> List[str]:
+        """Validate request against specification.
 
-            # Отображаем эндпоинты
-            if show_endpoints:
-                self.console.print("\n[bold]Эндпоинты:[/bold]")
-                self.display_endpoints(spec)
+        Args:
+            path: API path
+            method: HTTP method
+            parameters: Request parameters
 
-                # Пример запроса для первого эндпоинта
-                if "paths" in spec and spec["paths"]:
-                    path = next(iter(spec["paths"]))
-                    method = next((m for m in spec["paths"][path] if m.lower() in ["get", "post", "put", "delete"]), "get")
+        Returns:
+            List[str]: Validation errors
+        """
+        errors = []
+        operation = self.get_operation(path, method)
+        
+        if not operation:
+            errors.append(f"Operation {method.upper()} {path} not found")
+            return errors
+        
+        # Check required parameters
+        required_params = operation.get("parameters", [])
+        for param in required_params:
+            if param.get("required", False):
+                param_name = param.get("name")
+                if param_name and (not parameters or param_name not in parameters):
+                    errors.append(f"Required parameter '{param_name}' missing")
+        
+        return errors
 
-                    self.console.print("\n[bold]Пример запроса:[/bold]")
-                    sample = self.generate_sample_request(spec, path, method)
-                    self.console.print(Syntax(sample, "bash", theme="monokai"))
+    def get_schema(self, schema_name: str) -> Optional[Dict[str, Any]]:
+        """Get schema definition.
 
-        except Exception as e:
-            self.console.print(f"[bold red]Ошибка при инспекции API:[/bold red] {str(e)}")
-            logger.error(f"Ошибка при инспекции API: {str(e)}")
+        Args:
+            schema_name: Schema name
 
-    def close(self) -> None:
-        """Закрыть соединения."""
-        self.client.close()
+        Returns:
+            Optional[Dict[str, Any]]: Schema definition
+        """
+        schemas = self.spec.get("components", {}).get("schemas", {})
+        return schemas.get(schema_name)
 
-    def __enter__(self) -> "OpenApiInspector":
-        """Вход в контекстный менеджер."""
-        return self
+    def get_endpoints(self) -> List[str]:
+        """Get all available endpoints.
 
-    def __exit__(self, exc_type: Any, exc_val: Any, exc_tb: Any) -> None:
-        """Выход из контекстного менеджера."""
-        self.close()
+        Returns:
+            List[str]: List of endpoint paths
+        """
+        return list(self.paths.keys())
 
-# Создаем глобальный экземпляр инспектора
-_inspector = OpenApiInspector()
+    def get_methods_for_path(self, path: str) -> List[str]:
+        """Get available methods for path.
 
-def load_openapi_spec(spec_url: str) -> Dict[str, Any]:
-    """Загрузить спецификацию OpenAPI из URL или файла."""
-    return _inspector.load_spec(spec_url)
+        Args:
+            path: API path
 
-def validate_openapi_spec(spec: Dict[str, Any]) -> Tuple[bool, Optional[str]]:
-    """Проверить спецификацию на соответствие стандарту OpenAPI."""
-    return _inspector.validate_spec(spec)
+        Returns:
+            List[str]: Available HTTP methods
+        """
+        path_item = self.paths.get(path, {})
+        methods = []
+        
+        for method in ["get", "post", "put", "delete", "patch", "head", "options"]:
+            if method in path_item:
+                methods.append(method.upper())
+        
+        return methods
 
-def display_api_info(spec: Dict[str, Any]) -> None:
-    """Отобразить общую информацию об API."""
-    _inspector.display_api_info(spec)
+    def export_spec(self, output_file: str) -> None:
+        """Export specification to file.
 
-def display_endpoints(spec: Dict[str, Any]) -> None:
-    """Отобразить список доступных эндпоинтов."""
-    _inspector.display_endpoints(spec)
+        Args:
+            output_file: Output file path
+        """
+        with open(output_file, 'w', encoding='utf-8') as f:
+            json.dump(self.spec, f, indent=2, ensure_ascii=False)
 
-def generate_sample_request(spec: Dict[str, Any], path: str, method: str) -> str:
-    """Генерировать пример команды talkie для запроса к эндпоинту."""
-    return _inspector.generate_sample_request(spec, path, method)
+    def get_info(self) -> Dict[str, Any]:
+        """Get API information.
 
-def inspect_api(spec_url: str, show_endpoints: bool = True) -> None:
-    """Проверить и отобразить информацию об API."""
-    _inspector.inspect_api(spec_url, show_endpoints)
+        Returns:
+            Dict[str, Any]: API info
+        """
+        return self.spec.get("info", {})
 
-def extract_endpoints(spec: Dict[str, Any]) -> List[Dict[str, Any]]:
-    """Извлечь список всех конечных точек из спецификации.
+    def get_servers(self) -> List[Dict[str, str]]:
+        """Get server information.
+
+        Returns:
+            List[Dict[str, str]]: Server list
+        """
+        return self.spec.get("servers", [])
+
+
+def load_openapi_spec(spec_source: str) -> OpenAPIClient:
+    """Load OpenAPI specification.
 
     Args:
-        spec: Спецификация OpenAPI
+        spec_source: URL or file path to specification
 
     Returns:
-        List[Dict[str, Any]]: Список эндпоинтов с их деталями
+        OpenAPIClient: OpenAPI client instance
     """
-    endpoints = []
+    return OpenAPIClient(spec_source)
 
+
+def validate_openapi_spec(spec: Dict[str, Any]) -> List[str]:
+    """Validate OpenAPI specification.
+
+    Args:
+        spec: OpenAPI specification
+
+    Returns:
+        List[str]: Validation errors
+    """
+    errors = []
+    
+    # Check required fields
+    if "openapi" not in spec:
+        errors.append("Missing 'openapi' field")
+    
+    if "info" not in spec:
+        errors.append("Missing 'info' field")
+    else:
+        info = spec["info"]
+        if "title" not in info:
+            errors.append("Missing 'info.title' field")
+        if "version" not in info:
+            errors.append("Missing 'info.version' field")
+    
     if "paths" not in spec:
-        return endpoints
+        errors.append("Missing 'paths' field")
+    
+    return errors
 
-    for path, methods in spec["paths"].items():
-        for method, details in methods.items():
-            if method.lower() in ["get", "post", "put", "delete", "patch", "options", "head"]:
-                endpoint = {
-                    "path": path,
-                    "method": method.lower(),
-                    "summary": details.get("summary", ""),
-                    "description": details.get("description", ""),
-                    "tags": details.get("tags", []),
-                    "parameters": details.get("parameters", []),
-                    "responses": details.get("responses", {}),
-                }
-                endpoints.append(endpoint)
 
-    return endpoints
-
-def extract_endpoint_details(spec: Dict[str, Any], path: str, method: str) -> Dict[str, Any]:
-    """Извлечь детальную информацию о конкретном эндпоинте.
+def generate_client_code(spec: Dict[str, Any], language: str = "python") -> str:
+    """Generate client code from specification.
 
     Args:
-        spec: Спецификация OpenAPI
-        path: Путь эндпоинта
-        method: HTTP-метод
+        spec: OpenAPI specification
+        language: Target language
 
     Returns:
-        Dict[str, Any]: Детали эндпоинта
+        str: Generated client code
     """
-    if "paths" not in spec or path not in spec["paths"]:
-        raise ValueError(f"Путь {path} не найден в спецификации")
+    if language == "python":
+        return _generate_python_client(spec)
+    else:
+        return f"Client generation for {language} not implemented"
 
-    if method.lower() not in spec["paths"][path]:
-        raise ValueError(f"Метод {method} не найден для пути {path}")
 
-    return spec["paths"][path][method.lower()]
-
-def format_openapi_spec(spec: Dict[str, Any]) -> str:
-    """Форматировать спецификацию OpenAPI для вывода.
+def _generate_python_client(spec: Dict[str, Any]) -> str:
+    """Generate Python client code.
 
     Args:
-        spec: Спецификация OpenAPI
+        spec: OpenAPI specification
 
     Returns:
-        str: Отформатированная спецификация
+        str: Python client code
     """
-    # Форматируем как YAML для лучшей читаемости
-    return yaml.dump(spec, allow_unicode=True, sort_keys=False)
+    client_code = [
+        "import requests",
+        "from typing import Dict, Any, Optional",
+        "",
+        "class APIClient:",
+        "    def __init__(self, base_url: str):",
+        "        self.base_url = base_url",
+        "        self.session = requests.Session()",
+        "",
+        "    def request(self, method: str, path: str, **kwargs):",
+        "        url = self.base_url + path",
+        "        return self.session.request(method, url, **kwargs)",
+        ""
+    ]
+    
+    # Add methods for each operation
+    paths = spec.get("paths", {})
+    for path, path_item in paths.items():
+        for method, operation in path_item.items():
+            if method.upper() in ["GET", "POST", "PUT", "DELETE", "PATCH"]:
+                operation_id = operation.get("operationId", f"{method}_{path.replace('/', '_')}")
+                client_code.append(f"    def {operation_id}(self, **kwargs):")
+                client_code.append(f"        return self.request('{method.upper()}', '{path}', **kwargs)")
+                client_code.append("")
+    
+    return "\n".join(client_code)

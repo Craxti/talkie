@@ -161,13 +161,15 @@ class ErrorHandler:
             ErrorSeverity.CRITICAL: logger.error
         }.get(error_info.severity, logger.error)
 
-        message = f"[{error_info.context.component}] {error_info.context.operation}: {error_info.message}"
+        message = (f"[{error_info.context.component}] "
+                  f"{error_info.context.operation}: {error_info.message}")
         if error_info.context.request_id:
             message += f" (Request ID: {error_info.context.request_id})"
 
         log_level(message)
 
-        if error_info.stack_trace and error_info.severity in [ErrorSeverity.HIGH, ErrorSeverity.CRITICAL]:
+        if (error_info.stack_trace and
+            error_info.severity in [ErrorSeverity.HIGH, ErrorSeverity.CRITICAL]):
             logger.debug(f"Stack trace: {error_info.stack_trace}")
 
 

@@ -1,11 +1,9 @@
 """OpenAPI client code generator for Talkie."""
 
-import os
-import json
-from typing import Dict, Any, List, Optional, Set
+from typing import Dict, Any, List, Optional
 from pathlib import Path
 from dataclasses import dataclass
-from .openapi import OpenApiInspector
+from .openapi import OpenAPIClient
 
 
 @dataclass
@@ -34,7 +32,7 @@ class OpenApiClientGenerator:
         """
         self.spec_url = spec_url
         self.class_name = class_name
-        self.inspector = OpenApiInspector()
+        self.inspector = OpenAPIClient(spec_url)
         self.spec = None
         self.generated_methods: List[GeneratedMethod] = []
 
