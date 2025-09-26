@@ -73,7 +73,9 @@ class AsyncHttpClient:
         verify: bool = True, 
         follow_redirects: bool = True,
         concurrency: int = 10,
-        request_delay: float = 0.0
+        request_delay: float = 0.0,
+        max_connections: int = 100,
+        max_keepalive_connections: int = 20
     ):
         """
         Initialize asynchronous HTTP client with specified parameters.
@@ -90,6 +92,9 @@ class AsyncHttpClient:
         self.follow_redirects = follow_redirects
         self.concurrency = concurrency
         self.request_delay = request_delay
+        self.max_connections = max_connections
+        self.max_keepalive_connections = max_keepalive_connections
+        
         # Client will be initialized when entering context manager
         self.client = None
         # Semaphore for limiting simultaneous requests
@@ -305,10 +310,19 @@ class AsyncHttpClient:
     
     async def __aenter__(self) -> "AsyncHttpClient":
         """Enter asynchronous context manager."""
+        # Create optimized HTTP client with connection pooling
+        limits = httpx.Limits(
+            max_connections=self.max_connections,
+            max_keepalive_connections=self.max_keepalive_connections
+        )
+        
         self.client = httpx.AsyncClient(
             verify=self.verify,
             follow_redirects=self.follow_redirects,
-            timeout=self.timeout,
+            timeout=httpx.Timeout(self.timeout),
+            limits=limits
+            # HTTP/2 disabled by default - requires h2 package
+            # http2=True
         )
         return self
     

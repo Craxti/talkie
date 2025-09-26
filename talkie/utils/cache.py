@@ -253,7 +253,8 @@ class ResponseCache:
     def cache_response(
         self,
         response: httpx.Response,
-        ttl: Optional[int] = None
+        ttl: Optional[int] = None,
+        max_size_mb: float = 1.0
     ) -> None:
         """
         Cache HTTP response.
@@ -261,7 +262,12 @@ class ResponseCache:
         Args:
             response: HTTP response to cache
             ttl: Time to live in seconds (uses default if None)
+            max_size_mb: Maximum response size to cache in MB
         """
+        # Skip caching if response is too large
+        response_size_mb = len(response.content) / (1024 * 1024)
+        if response_size_mb > max_size_mb:
+            return
         request = response.request
         method = request.method
         url = str(request.url)

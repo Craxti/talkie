@@ -2,6 +2,8 @@
 
 from typing import Any, Dict, Optional, Union, Tuple
 import os
+import weakref
+from contextlib import asynccontextmanager
 
 import httpx
 from httpx import Response
@@ -30,7 +32,9 @@ class HttpClient:
                  verify: bool = True, 
                  follow_redirects: bool = True,
                  cert: Optional[Union[str, Tuple[str, str]]] = None,
-                 enable_cache: bool = True):
+                 enable_cache: bool = True,
+                 max_connections: int = 100,
+                 max_keepalive_connections: int = 20):
         """
         Initialize HTTP client with specified parameters.
         
@@ -41,12 +45,16 @@ class HttpClient:
             cert (Optional[Union[str, Tuple[str, str]]]): Client certificate. 
                 Can be a path to a .pem file or a tuple of (cert_file, key_file) paths.
             enable_cache (bool): Enable response caching. Default is True.
+            max_connections (int): Maximum number of connections in pool. Default is 100.
+            max_keepalive_connections (int): Maximum keepalive connections. Default is 20.
         """
         self.timeout = timeout
         self.verify = verify
         self.follow_redirects = follow_redirects
         self.cert = cert
         self.enable_cache = enable_cache
+        self.max_connections = max_connections
+        self.max_keepalive_connections = max_keepalive_connections
         
         # Initialize cache
         self.cache = get_cache() if enable_cache else None
@@ -55,11 +63,20 @@ class HttpClient:
         if cert:
             self._validate_cert_files(cert)
         
+        # Create optimized HTTP client with connection pooling
+        limits = httpx.Limits(
+            max_connections=max_connections,
+            max_keepalive_connections=max_keepalive_connections
+        )
+        
         self.client = httpx.Client(
             verify=self.verify,
             follow_redirects=self.follow_redirects,
             timeout=httpx.Timeout(timeout),
-            cert=self.cert
+            cert=self.cert,
+            limits=limits
+            # HTTP/2 disabled by default - requires h2 package
+            # http2=True
         )
     
     def _validate_cert_files(self, cert: Union[str, Tuple[str, str]]) -> None:
@@ -162,7 +179,10 @@ class HttpClient:
             # Cache successful responses if caching is enabled
             if (self.cache and self.enable_cache and 
                 200 <= response.status_code < 300):
-                self.cache.cache_response(response)
+                # Only cache GET requests and responses under 1MB
+                if (method.upper() == "GET" and 
+                    len(response.content) < 1024 * 1024):
+                    self.cache.cache_response(response)
             
             # Check for HTTP errors
             try:

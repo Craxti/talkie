@@ -98,6 +98,10 @@ class PerformanceMonitor:
                 cpu_percent = process.cpu_percent()
                 memory_mb = process.memory_info().rss / 1024 / 1024
                 
+                # Limit data collection to prevent memory leaks
+                if len(self.data) > 1000:  # Keep only last 1000 measurements
+                    self.data = self.data[-500:]  # Keep last 500
+                
                 self.data.append({
                     "timestamp": time.time(),
                     "cpu": cpu_percent,
@@ -105,8 +109,8 @@ class PerformanceMonitor:
                 })
                 
                 time.sleep(0.1)  # Monitor every 100ms
-            except:
-                break
+            except Exception:
+                break  # Exit gracefully on any error
 
 
 class BenchmarkRunner:
