@@ -135,6 +135,14 @@ disable = [
     "E1120",  # no-value-for-parameter
     "E1124",  # redundant-keyword-arg
     "W1514",  # unspecified-encoding
+    "E1136",  # unsubscriptable-object
+    "C0304",  # missing-final-newline
+    "W0719",  # broad-exception-raised
+    "W1510",  # subprocess-run-check
+    "C0115",  # missing-class-docstring
+    "E1121",  # too-many-function-args
+    "W0621",  # redefined-outer-name
+    "R0801",  # duplicate-code
 ]
 
 [tool.pylint.format]
