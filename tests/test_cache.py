@@ -8,7 +8,14 @@ from unittest.mock import patch, mock_open
 
 import pytest
 import httpx
-from talkie.utils.cache import ResponseCache, CacheConfig, CacheEntry, get_cache, set_cache_config
+from talkie.utils.cache import (
+    ResponseCache,
+    CacheConfig,
+    CacheEntry,
+    CacheKeyData,
+    get_cache,
+    set_cache_config,
+)
 
 
 class TestCacheConfig:
@@ -140,25 +147,29 @@ class TestResponseCache:
             cache = ResponseCache(config)
             
             # Test basic key generation
-            key1 = cache._generate_cache_key("GET", "https://example.com")
-            key2 = cache._generate_cache_key("GET", "https://example.com")
+            key_data1 = CacheKeyData(method="GET", url="https://example.com")
+            key1 = cache._generate_cache_key(key_data1)
+            key2 = cache._generate_cache_key(key_data1)
             assert key1 == key2  # Same request should generate same key
             
             # Test different requests generate different keys
-            key3 = cache._generate_cache_key("POST", "https://example.com")
+            key_data3 = CacheKeyData(method="POST", url="https://example.com")
+            key3 = cache._generate_cache_key(key_data3)
             assert key1 != key3
             
             # Test with headers
-            key4 = cache._generate_cache_key(
-                "GET", 
-                "https://example.com",
+            key_data4 = CacheKeyData(
+                method="GET",
+                url="https://example.com",
                 headers={"Authorization": "Bearer token"}
             )
-            key5 = cache._generate_cache_key(
-                "GET", 
-                "https://example.com",
+            key_data5 = CacheKeyData(
+                method="GET",
+                url="https://example.com",
                 headers={"Authorization": "Bearer different-token"}
             )
+            key4 = cache._generate_cache_key(key_data4)
+            key5 = cache._generate_cache_key(key_data5)
             assert key4 != key5
 
     def test_should_cache_request(self):

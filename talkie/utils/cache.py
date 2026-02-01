@@ -30,6 +30,15 @@ class CacheEntry:
         """Check if cache entry is expired."""
         return time.time() > self.expires_at
 
+    def to_dict(self) -> Dict[str, Any]:
+        """Convert to dictionary for JSON serialization."""
+        return asdict(self)
+
+    @classmethod
+    def from_dict(cls, data: Dict[str, Any]) -> 'CacheEntry':
+        """Create instance from dictionary."""
+        return cls(**data)
+
 
 @dataclass
 class CacheKeyData:
