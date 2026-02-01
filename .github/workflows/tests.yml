@@ -21,7 +21,7 @@ jobs:
       - name: Verify build
         run: |
           pip install .
-          python -c "import talkie; talkie.__main__.main()"
+          python -m talkie
       - name: Run tests
         run: pytest --cov=talkie --cov-report=xml -v
       - name: Upload coverage
