@@ -1,0 +1,50 @@
+site_name: Talkie
+site_description: A convenient command-line HTTP client for APIs and web services
+site_url: https://github.com/craxti/talkie
+repo_url: https://github.com/craxti/talkie
+repo_name: craxti/talkie
+edit_uri: edit/main/docs/
+
+theme:
+  name: material
+  palette:
+    - scheme: default
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - scheme: slate
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+
+nav:
+  - Home: index.md
+  - Usage: usage.md
+  - CLI Reference: cli_reference.md
+  - API Reference: api_reference.md
+  - Architecture: architecture.md
+  - Testing: testing.md
+  - Development:
+    - Setup: development_setup.md
+    - Tools: development_tools.md
+  - Video Tutorials: video_tutorials.md
+
+markdown_extensions:
+  - pymdownx.highlight
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+  - pymdownx.tabbed
+  - admonition
+  - tables
+  - pymdownx.snippets
+  - pymdownx.details
+
+plugins:
+  - search

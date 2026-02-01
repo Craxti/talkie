@@ -1,4 +1,4 @@
-#sing Talkie
+# Using Talkie
 
 ## Parallel execution of requests
 

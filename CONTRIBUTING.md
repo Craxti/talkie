@@ -4,10 +4,13 @@ Thank you for your interest in contributing to Talkie! This document provides gu
 
 ## Getting Started
 
+See [Development Setup](docs/development_setup.md) for detailed instructions.
+
 1. Fork the repository
-2. Clone your fork: `git clone https://github.com/craxtitalkie.git`
+2. Clone your fork: `git clone https://github.com/YOUR_USERNAME/talkie.git`
 3. Create a new branch: `git checkout -b feature/your-feature-name`
 4. Install development dependencies: `pip install -e ".[dev]"`
+5. Install pre-commit hooks: `pre-commit install`
 
 ## Before Submitting a Merge Request
 

@@ -42,7 +42,7 @@ class MockRequest:
     """Мок для HTTP-запросов в тестах."""
     def __init__(self):
         self.method = "GET"
-        self.headers = {"User-Agent": "talkie/0.1.2"}
+        self.headers = {"User-Agent": "talkie/0.1.3"}
         self.url = MockURL()
 
 

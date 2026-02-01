@@ -3,15 +3,55 @@
 A convenient command-line HTTP client for interacting with APIs and web services. Talkie makes working with HTTP in the terminal simple and human-friendly thanks to intuitive syntax and beautiful formatted output.
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/talkie-team/talkie/main/docs/images/logo.png" alt="Talkie Logo" width="180" height="180" />
+  <img src="docs/images/logo.svg" alt="Talkie Logo" width="180" height="180" />
 </p>
 
+[![PyPI version](https://img.shields.io/pypi/v/talkie.svg)](https://pypi.org/project/talkie/)
+[![Python 3.8+](https://img.shields.io/pypi/pyversions/talkie.svg)](https://pypi.org/project/talkie/)
+[![Tests](https://github.com/craxti/talkie/actions/workflows/tests.yml/badge.svg)](https://github.com/craxti/talkie/actions/workflows/tests.yml)
+[![codecov](https://codecov.io/gh/craxti/talkie/graph/badge.svg)](https://codecov.io/gh/craxti/talkie)
+[![Pylint](https://github.com/craxti/talkie/actions/workflows/pylint.yml/badge.svg)](https://github.com/craxti/talkie/actions/workflows/pylint.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
-[![Python: 3.8+](https://img.shields.io/badge/Python-3.8+-blue.svg)](https://www.python.org/downloads/)
+
+## Quick Start
+
+```bash
+# Install
+pip install talkie
+
+# Make your first request
+talkie get https://jsonplaceholder.typicode.com/posts/1
+```
+
+<details>
+<summary>📺 See demo output</summary>
+
+```
+$ talkie get https://jsonplaceholder.typicode.com/posts/1
+
+HTTP/1.1 200 OK
+Content-Type: application/json
+
+{
+  "userId": 1,
+  "id": 1,
+  "title": "sunt aut facere repellat provident occasi...",
+  "body": "quia et suscipit\nsuscipit recusandae consequuntur..."
+}
+```
+
+</details>
+
+<p align="center">
+  <img src="docs/images/demo.gif" alt="Talkie demo" width="700" />
+</p>
 
 ## Contents
 
+- [Quick Start](#quick-start)
 - [Features](#features)
+- [Why Talkie?](#why-talkie)
+- [Comparison with Alternatives](#comparison-with-alternatives)
 - [Installation](#installation)
 - [Usage](#usage)
   - [Basic Requests](#basic-requests)
@@ -31,8 +71,11 @@ A convenient command-line HTTP client for interacting with APIs and web services
   - [Requirements](#requirements)
   - [Project Structure](#project-structure)
   - [Running Tests](#running-tests)
+  - [Pre-commit Hooks](#pre-commit-hooks)
+  - [Documentation Site](#documentation-site)
   - [API Documentation](#api-documentation)
 - [FAQ](#faq)
+- [Troubleshooting](#troubleshooting)
 - [License](#license)
 - [Contributing](#contributing)
 
@@ -52,6 +95,52 @@ A convenient command-line HTTP client for interacting with APIs and web services
 - 📊 **GraphQL requests** for working with GraphQL APIs
 - 📜 **Request history** for reuse and analysis
 - ⚡ **Parallel request execution** for improved performance
+
+## Why Talkie?
+
+Talkie combines the best of both worlds: the simplicity of HTTPie and the power of curl, while adding features that neither offers out of the box.
+
+**When to choose Talkie over HTTPie:**
+- You need **GraphQL** — Talkie has a dedicated `graphql` command with query files and variables
+- You work with **WebSocket** — built-in `ws` command, no extra tools
+- You explore **OpenAPI** specs — inspect endpoints, schemas, and generate examples
+- You run **parallel requests** — batch API calls with configurable concurrency
+- You want **searchable history** — find, repeat, and export past requests
+
+**When to choose Talkie over curl:**
+- You prefer **human-friendly syntax** — `talkie post /users name=John` instead of `-d '{"name":"John"}'`
+- You want **colored, formatted output** — JSON/XML/HTML with syntax highlighting
+- You need **environments** — switch between dev/staging/prod with one config
+- You don't want to remember curl flags — intuitive `-H`, `-q`, `-o` options
+
+### Unique Features
+
+| Feature | Description |
+|---------|-------------|
+| **GraphQL** | Native `talkie graphql` with query files, variables, and introspection |
+| **WebSocket** | `talkie ws` for real-time connections, no separate client needed |
+| **OpenAPI** | Inspect specs, list endpoints, generate request examples |
+| **Parallel requests** | `talkie parallel` for batch execution with concurrency control |
+| **Request history** | Search, repeat, export/import — full audit trail of your API work |
+
+## Comparison with Alternatives
+
+| Feature | Talkie | HTTPie | curl | wget |
+|---------|:------:|:------:|:----:|:----:|
+| Intuitive syntax | ✅ | ✅ | ❌ | ⚠️ |
+| Colored output | ✅ | ✅ | ❌ | ❌ |
+| JSON/XML formatting | ✅ | ✅ | ❌ | ❌ |
+| **GraphQL** | ✅ | ❌ | ⚠️ | ❌ |
+| **WebSocket** | ✅ | ❌ | ✅ | ❌ |
+| **OpenAPI inspection** | ✅ | ❌ | ❌ | ❌ |
+| **Parallel requests** | ✅ | ❌ | ❌ | ⚠️ |
+| **Request history** | ✅ | ⚠️ | ❌ | ❌ |
+| Environment config | ✅ | ⚠️ | ❌ | ❌ |
+| Curl command generation | ✅ | ⚠️ | — | — |
+| Pre-installed | ❌ | ❌ | ✅ | ✅ |
+| Python API | ✅ | ✅ | ❌ | ❌ |
+
+*Legend: ✅ Yes | ⚠️ Partial/Manual | ❌ No | — N/A*
 
 ## Installation
 
@@ -385,16 +474,35 @@ pytest
 # Run tests for specific module
 pytest tests/test_formatter.py
 
-# Run integration tests
-pytest tests/test_integration.py
-
-# Check code coverage
+# Run with coverage
 pytest --cov=talkie
+```
+
+### Pre-commit Hooks
+
+```bash
+pip install pre-commit
+pre-commit install
+# Hooks run automatically on git commit (black, isort, mypy)
+```
+
+### Documentation Site
+
+```bash
+pip install -e ".[dev]"
+mkdocs serve
+# Open http://127.0.0.1:8000
 ```
 
 ### API Documentation
 
-API documentation is available in [docs/api_reference.md](docs/api_reference.md).
+Documentation is available in the `docs/` folder and via `mkdocs serve`:
+
+- [CLI Reference](docs/cli_reference.md) — Complete command-line options
+- [API Reference](docs/api_reference.md) — Python API
+- [Architecture](docs/architecture.md) — System design
+- [Development Setup](docs/development_setup.md) — Dev environment
+- [Development Tools](docs/development_tools.md) — Pre-commit, pytest, etc.
 
 It contains detailed description of all Talkie API components:
 - HTTP client and request builder
@@ -462,6 +570,59 @@ Save query to file and pass it to command:
 
 ```bash
 talkie graphql https://api.example.com/graphql -f complex_query.graphql -v id=123 -v limit=10
+```
+
+## Troubleshooting
+
+### SSL certificate verification failed
+
+If you get `SSLError` or certificate errors when connecting to HTTPS:
+
+```bash
+# For development only — disable SSL verification (not recommended for production)
+talkie get https://api.example.com --insecure
+```
+
+### Command not found: talkie
+
+Ensure Talkie is installed and in your PATH:
+
+```bash
+pip install talkie
+# Or with user install:
+pip install --user talkie
+# Verify:
+which talkie
+```
+
+### Colors not displaying in terminal
+
+Some terminals don't support colors. Try:
+
+```bash
+# Force colored output
+export FORCE_COLOR=1
+talkie get https://api.example.com/users
+
+# Or disable colors
+talkie get https://api.example.com/users --no-color
+```
+
+### Config file not found
+
+Talkie uses `~/.talkie/config.json` by default. Override with:
+
+```bash
+export TALKIE_CONFIG_DIR=/path/to/your/config
+talkie get /users
+```
+
+### Timeout errors
+
+Increase timeout for slow APIs:
+
+```bash
+talkie get https://api.example.com/slow-endpoint --timeout 60
 ```
 
 ## License

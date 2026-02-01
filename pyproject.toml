@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "talkie"
-version = "0.1.2"
+version = "0.1.3"
 description = "A command line HTTP client that is easy to use"
 readme = "README.md"
 requires-python = ">=3.8"
@@ -13,7 +13,7 @@ authors = [
     { name = "Craxti" },
 ]
 classifiers = [
-    "Development Status :: 3 - Alpha",
+    "Development Status :: 4 - Beta",
     "Environment :: Console",
     "Intended Audience :: Developers",
     "License :: OSI Approved :: MIT License",
@@ -39,8 +39,20 @@ dependencies = [
     "websockets>=10.4",
 ]
 
+keywords = ["http", "cli", "api", "rest", "graphql", "websocket", "curl", "httpie"]
+
+[project.urls]
+Homepage = "https://github.com/craxti/talkie"
+Documentation = "https://github.com/craxti/talkie#readme"
+Repository = "https://github.com/craxti/talkie"
+"Bug Tracker" = "https://github.com/craxti/talkie/issues"
+
 [project.optional-dependencies]
 dev = [
+    "mkdocs>=1.5.0",
+    "mkdocs-material>=9.0.0",
+    "pillow>=10.0.0",
+    "pre-commit>=3.0.0",
     "pytest>=7.0.0",
     "pytest-cov>=4.1.0",
     "pytest-httpserver>=1.0.6",
@@ -90,7 +102,7 @@ branch = true
 exclude_lines = [
     "pragma: no cover",
     "def __repr__",
-    "if __name__ == .__main__.:",
+    "if __name__ == ['\"]__main__['\"]:",
     "raise NotImplementedError",
     "if TYPE_CHECKING:",
     "pass",

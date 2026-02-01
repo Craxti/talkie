@@ -25,20 +25,20 @@ Talkie uses `pytest` for unit and integration testing. The tests cover all the m
 pip install pytest pytest-httpserver pytest-asyncio pytest-mock pytest-cov
 ```
 
-2. Make sure that you have installed all the main dependencies of the project:
+2. Install the project with dev dependencies:
 ```bash
-pip install -r requirements.txt
+pip install -e ".[dev]"
 ```
 
 ## Test structure
 
 The tests are organized by modules:
 - `tests/test_cli.py` - CLI interface tests
-- `tests/test_request_builder.py` - request builder tests
-- `tests/test_integration.py` - integration tests
-- `tests/test_openapi.py` - tests of working with OpenAPI
-- `tests/test_formatter.py` - data formatter tests
 - `tests/test_client.py` - HTTP client tests
+- `tests/test_config.py` - configuration tests
+- `tests/test_formatter.py` - data formatter tests
+- `tests/test_cache.py` - caching tests
+- `tests/test_logger.py` - logging tests
 
 ## Run tests
 
@@ -54,7 +54,7 @@ python -m pytest tests/ -v
 
 ### Run a specific test
 ```bash
-python -m pytest tests/test_request_builder.py -v
+python -m pytest tests/test_formatter.py -v
 ```
 
 ### Run with code coverage
@@ -94,23 +94,19 @@ server.stop()
 
 ### Example test
 ```python
+from talkie.core.request_builder import RequestBuilder
+
 def test_parse_headers():
-"""Header parsing test."""
-headers = [
-"Content-Type: application/json",
-"Authorization: Bearer token123"
-]
+    """Header parsing test."""
+    builder = RequestBuilder()
+    builder.set_method("GET").set_url("https://example.com/api")
+    builder.add_header("Content-Type", "application/json")
+    builder.add_header("Authorization", "Bearer token123")
 
-builder = RequestBuilder(
-method="GET",
-url="https://example.com/api",
-headers=headers
-)
-
-assert builder.headers == {
-"Content-Type": "application/json",
-"Authorization": "Bearer token123"
-}
+    assert builder.headers == {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer token123"
+    }
 ```
 
 ### Edge case testing
