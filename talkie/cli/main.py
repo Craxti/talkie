@@ -2,11 +2,13 @@
 
 import sys
 
+from talkie import __version__
+
 
 def main():
     """Main entry point."""
     print("Talkie CLI - HTTP Client")
-    print("Version: 0.1.0")
+    print(f"Version: {__version__}")
     return 0
 
 
