@@ -123,8 +123,8 @@ class TestLogRequest:
             log_request("GET", "https://example.com", headers={})
             mock_logger.info.assert_called_once()
             call_args = mock_logger.info.call_args[0]
-            assert "GET" in call_args[0]
-            assert "https://example.com" in call_args[0]
+            assert call_args[1] == "GET"
+            assert call_args[2] == "https://example.com"
 
     def test_log_request_with_headers(self):
         """Test request logging with headers."""
@@ -133,8 +133,8 @@ class TestLogRequest:
             log_request("POST", "https://example.com", headers=headers)
             mock_logger.info.assert_called_once()
             call_args = mock_logger.info.call_args[0]
-            assert "POST" in call_args[0]
-            assert "https://example.com" in call_args[0]
+            assert call_args[1] == "POST"
+            assert call_args[2] == "https://example.com"
 
     def test_log_request_with_body(self):
         """Test request logging with data (body)."""
@@ -143,8 +143,8 @@ class TestLogRequest:
             log_request("POST", "https://example.com", headers={}, data=data)
             mock_logger.info.assert_called_once()
             call_args = mock_logger.info.call_args[0]
-            assert "POST" in call_args[0]
-            assert "https://example.com" in call_args[0]
+            assert call_args[1] == "POST"
+            assert call_args[2] == "https://example.com"
 
     def test_log_request_with_all_params(self):
         """Test request logging with all parameters."""
@@ -154,8 +154,8 @@ class TestLogRequest:
             log_request("POST", "https://example.com", headers=headers, data=data)
             mock_logger.info.assert_called_once()
             call_args = mock_logger.info.call_args[0]
-            assert "POST" in call_args[0]
-            assert "https://example.com" in call_args[0]
+            assert call_args[1] == "POST"
+            assert call_args[2] == "https://example.com"
 
 
 class TestLogResponse:
@@ -166,8 +166,8 @@ class TestLogResponse:
         with patch('talkie.utils.logger.logger') as mock_logger:
             log_response(200, {}, 1024)
             mock_logger.info.assert_called_once()
-            call_args = mock_logger.info.call_args[0][0]
-            assert "200" in call_args
+            call_args = mock_logger.info.call_args[0]
+            assert call_args[1] == 200
 
     def test_log_response_with_headers(self):
         """Test response logging with headers."""
@@ -175,16 +175,16 @@ class TestLogResponse:
             headers = {"Content-Type": "application/json", "X-Custom": "value"}
             log_response(200, headers, 2048)
             mock_logger.info.assert_called_once()
-            call_args = mock_logger.info.call_args[0][0]
-            assert "200" in call_args
+            call_args = mock_logger.info.call_args[0]
+            assert call_args[1] == 200
 
     def test_log_response_error_status(self):
         """Test response logging with error status."""
         with patch('talkie.utils.logger.logger') as mock_logger:
             log_response(404, {}, 0)
             mock_logger.info.assert_called_once()
-            call_args = mock_logger.info.call_args[0][0]
-            assert "404" in call_args
+            call_args = mock_logger.info.call_args[0]
+            assert call_args[1] == 404
 
 
 class TestLogError:
