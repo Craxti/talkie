@@ -116,15 +116,15 @@ class TestGetLogger:
 
 class TestLogRequest:
     """Test request logging."""
-    
+
     def test_log_request_basic(self):
         """Test basic request logging."""
         with patch('talkie.utils.logger.logger') as mock_logger:
-            log_request("GET", "https://example.com")
+            log_request("GET", "https://example.com", headers={})
             mock_logger.info.assert_called_once()
-            call_args = mock_logger.info.call_args[0][0]
-            assert "GET" in call_args
-            assert "https://example.com" in call_args
+            call_args = mock_logger.info.call_args[0]
+            assert "GET" in call_args[0]
+            assert "https://example.com" in call_args[0]
 
     def test_log_request_with_headers(self):
         """Test request logging with headers."""
@@ -132,74 +132,68 @@ class TestLogRequest:
             headers = {"Authorization": "Bearer token", "Content-Type": "application/json"}
             log_request("POST", "https://example.com", headers=headers)
             mock_logger.info.assert_called_once()
-            call_args = mock_logger.info.call_args[0][0]
-            assert "POST" in call_args
-            assert "https://example.com" in call_args
+            call_args = mock_logger.info.call_args[0]
+            assert "POST" in call_args[0]
+            assert "https://example.com" in call_args[0]
 
     def test_log_request_with_body(self):
-        """Test request logging with body."""
+        """Test request logging with data (body)."""
         with patch('talkie.utils.logger.logger') as mock_logger:
-            body = '{"name": "test"}'
-            log_request("POST", "https://example.com", body=body)
+            data = {"name": "test"}
+            log_request("POST", "https://example.com", headers={}, data=data)
             mock_logger.info.assert_called_once()
-            call_args = mock_logger.info.call_args[0][0]
-            assert "POST" in call_args
-            assert "https://example.com" in call_args
+            call_args = mock_logger.info.call_args[0]
+            assert "POST" in call_args[0]
+            assert "https://example.com" in call_args[0]
 
     def test_log_request_with_all_params(self):
         """Test request logging with all parameters."""
         with patch('talkie.utils.logger.logger') as mock_logger:
             headers = {"Content-Type": "application/json"}
-            body = '{"name": "test"}'
-            params = {"page": 1}
-            
-            log_request("POST", "https://example.com", headers=headers, body=body, params=params)
+            data = {"name": "test"}
+            log_request("POST", "https://example.com", headers=headers, data=data)
             mock_logger.info.assert_called_once()
-            call_args = mock_logger.info.call_args[0][0]
-            assert "POST" in call_args
-            assert "https://example.com" in call_args
+            call_args = mock_logger.info.call_args[0]
+            assert "POST" in call_args[0]
+            assert "https://example.com" in call_args[0]
 
 
 class TestLogResponse:
     """Test response logging."""
-    
+
     def test_log_response_basic(self):
         """Test basic response logging."""
         with patch('talkie.utils.logger.logger') as mock_logger:
-            log_response(200, "Success")
+            log_response(200, {}, 1024)
             mock_logger.info.assert_called_once()
             call_args = mock_logger.info.call_args[0][0]
             assert "200" in call_args
-            assert "Success" in call_args
 
     def test_log_response_with_headers(self):
         """Test response logging with headers."""
         with patch('talkie.utils.logger.logger') as mock_logger:
             headers = {"Content-Type": "application/json", "X-Custom": "value"}
-            log_response(200, "Success", headers=headers)
+            log_response(200, headers, 2048)
             mock_logger.info.assert_called_once()
             call_args = mock_logger.info.call_args[0][0]
             assert "200" in call_args
-            assert "Success" in call_args
 
     def test_log_response_error_status(self):
         """Test response logging with error status."""
         with patch('talkie.utils.logger.logger') as mock_logger:
-            log_response(404, "Not Found")
+            log_response(404, {}, 0)
             mock_logger.info.assert_called_once()
             call_args = mock_logger.info.call_args[0][0]
             assert "404" in call_args
-            assert "Not Found" in call_args
 
 
 class TestLogError:
     """Test error logging."""
-    
+
     def test_log_error_basic(self):
         """Test basic error logging."""
         with patch('talkie.utils.logger.logger') as mock_logger:
-            error = Exception("Test error")
-            log_error(error)
+            log_error("Test error")
             mock_logger.error.assert_called_once()
             call_args = mock_logger.error.call_args[0][0]
             assert "Test error" in call_args
@@ -208,36 +202,34 @@ class TestLogError:
         """Test error logging with custom message."""
         with patch('talkie.utils.logger.logger') as mock_logger:
             error = Exception("Test error")
-            log_error(error, "Custom error message")
+            log_error("Custom error message", exception=error)
             mock_logger.error.assert_called_once()
             call_args = mock_logger.error.call_args[0][0]
             assert "Custom error message" in call_args
             assert "Test error" in call_args
 
-    def test_log_error_with_context(self):
-        """Test error logging with context."""
+    def test_log_error_with_exception(self):
+        """Test error logging with exception."""
         with patch('talkie.utils.logger.logger') as mock_logger:
             error = Exception("Test error")
-            context = {"url": "https://example.com", "method": "GET"}
-            log_error(error, context=context)
+            log_error("Request failed", exception=error)
             mock_logger.error.assert_called_once()
             call_args = mock_logger.error.call_args[0][0]
+            assert "Request failed" in call_args
             assert "Test error" in call_args
-            # Context is not currently used in the log_error function
-            # This test verifies the function doesn't crash with context
 
     def test_log_error_different_types(self):
         """Test error logging with different error types."""
         with patch('talkie.utils.logger.logger') as mock_logger:
             # Test with ValueError
             error = ValueError("Invalid value")
-            log_error(error)
+            log_error("Validation failed", exception=error)
             mock_logger.error.assert_called()
-            
+
             # Test with RuntimeError
             mock_logger.reset_mock()
             error = RuntimeError("Runtime error")
-            log_error(error)
+            log_error("Runtime failed", exception=error)
             mock_logger.error.assert_called()
 
 
@@ -259,9 +251,9 @@ class TestLoggingIntegration:
             assert logger.level == logging.INFO
             
             # Test logging different types of messages
-            log_request("GET", "https://example.com")
-            log_response(200, "Success")
-            log_error(Exception("Test error"))
+            log_request("GET", "https://example.com", headers={})
+            log_response(200, {}, 1024)
+            log_error("Test error", exception=Exception("Test error"))
             
             # Check that log file was created and has content
             assert os.path.exists(temp_path)

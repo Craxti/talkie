@@ -92,12 +92,14 @@ class TestConfig:
 
     def test_config_load_default(self):
         """Test loading default config."""
-        with patch('talkie.utils.config.Config._get_config_path') as mock_path:
-            mock_path.return_value = Path("/nonexistent/path")
-            
-            config = Config.load_default()
-            assert isinstance(config, Config)
-            assert config.default_headers == {"User-Agent": "Talkie/0.1.0"}
+        with tempfile.TemporaryDirectory() as tmpdir:
+            config_path = Path(tmpdir) / "config.json"
+            with patch('talkie.utils.config.Config._get_config_path') as mock_path:
+                mock_path.return_value = config_path
+
+                config = Config.load_default()
+                assert isinstance(config, Config)
+                assert config.default_headers == {"User-Agent": "Talkie/0.1.0"}
 
     def test_config_load_from_file(self):
         """Test loading config from file."""
