@@ -31,7 +31,6 @@ nav:
   - Development:
     - Setup: development_setup.md
     - Tools: development_tools.md
-    - Publishing: publishing.md
   - Video Tutorials: video_tutorials.md
 
 markdown_extensions:
