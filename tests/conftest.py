@@ -1,5 +1,6 @@
 """Конфигурация и общие фикстуры для тестов."""
 
+import talkie  # noqa: F401 - ensure package is loaded for coverage
 import os
 import tempfile
 import subprocess
