@@ -1,8 +1,15 @@
 """Module for OpenAPI specification handling."""
 
 import json
+import logging
+from pathlib import Path
 from typing import Dict, Any, List, Optional, Union
 from urllib.parse import urljoin
+
+import httpx
+import yaml
+
+logger = logging.getLogger("talkie.openapi")
 
 
 class OpenAPIClient:
@@ -25,27 +32,37 @@ class OpenAPIClient:
         self.operations = self._extract_operations()
 
     def _load_spec(self, spec_source: str) -> Dict[str, Any]:
-        """Load OpenAPI specification from source.
+        """Load OpenAPI specification from URL, file path (.json/.yaml), or YAML/JSON string."""
+        raw: Union[str, bytes]
+        if spec_source.startswith(("http://", "https://")):
+            try:
+                with httpx.Client(follow_redirects=True, timeout=30.0) as client:
+                    r = client.get(spec_source)
+                    r.raise_for_status()
+                    raw = r.text
+            except httpx.HTTPError as exc:
+                logger.warning("Failed to fetch OpenAPI from URL: %s", exc)
+                raise ValueError(f"Could not fetch OpenAPI spec: {exc}") from exc
+        else:
+            path = Path(spec_source)
+            if path.is_file():
+                raw = path.read_bytes()
+            else:
+                raise FileNotFoundError(f"OpenAPI spec file not found: {spec_source}")
 
-        Args:
-            spec_source: URL or file path to spec
+        text = raw.decode("utf-8") if isinstance(raw, bytes) else raw
+        stripped = text.lstrip()
+        try:
+            if stripped.startswith("{") or stripped.startswith("["):
+                spec = json.loads(text)
+            else:
+                spec = yaml.safe_load(text)
+        except (json.JSONDecodeError, yaml.YAMLError) as exc:
+            raise ValueError(f"Invalid OpenAPI document: {exc}") from exc
 
-        Returns:
-            Dict[str, Any]: Parsed specification
-        """
-        # In a real implementation, this would load from URL or file
-        # For now, return a mock specification
-        return {
-            "openapi": "3.0.0",
-            "info": {
-                "title": "API",
-                "version": "1.0.0"
-            },
-            "servers": [
-                {"url": "https://api.example.com"}
-            ],
-            "paths": {}
-        }
+        if not isinstance(spec, dict):
+            raise ValueError("OpenAPI spec must be a JSON/YAML object")
+        return spec
 
     def _get_base_url(self) -> str:
         """Get base URL from specification.
@@ -66,17 +83,24 @@ class OpenAPIClient:
         """
         operations = []
 
+        http_methods = frozenset(
+            ("GET", "POST", "PUT", "DELETE", "PATCH", "HEAD", "OPTIONS")
+        )
         for path, path_item in self.paths.items():
+            if not isinstance(path_item, dict):
+                continue
             for method, operation in path_item.items():
-                http_methods = [
-                    "GET", "POST", "PUT", "DELETE", "PATCH", "HEAD", "OPTIONS"
-                ]
-                if method.upper() in http_methods:
-                    operations.append({
+                if method.upper() not in http_methods:
+                    continue
+                if not isinstance(operation, dict):
+                    continue
+                operations.append(
+                    {
                         "path": path,
                         "method": method.upper(),
-                        "operation": operation
-                    })
+                        "operation": operation,
+                    }
+                )
 
         return operations
 

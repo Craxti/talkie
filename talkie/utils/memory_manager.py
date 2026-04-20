@@ -3,7 +3,7 @@
 import gc
 import threading
 import time
-from typing import Dict, Any, Optional, Callable
+from typing import Any, Callable, Dict, List, Optional
 from dataclasses import dataclass
 from ..utils.performance_config import get_performance_config
 
@@ -32,7 +32,7 @@ class MemoryManager:
         self.monitoring = False
         self._monitor_thread: Optional[threading.Thread] = None
         self._stats: Dict[str, MemoryStats] = {}
-        self._callbacks: list[Callable[[MemoryStats], None]] = []
+        self._callbacks: List[Callable[[MemoryStats], None]] = []
         self._lock = threading.Lock()
 
     def start_monitoring(self) -> None:

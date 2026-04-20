@@ -1,7 +1,7 @@
 """Enhanced error handling and validation utilities."""
 
 import traceback
-from typing import Any, Dict, Optional, Union, Callable, Type
+from typing import Any, Callable, Dict, List, Optional, Type, Union
 from dataclasses import dataclass
 from enum import Enum
 from ..utils.logger import Logger
@@ -52,7 +52,7 @@ class ErrorHandler:
     """Enhanced error handling and recovery."""
 
     def __init__(self):
-        self.error_callbacks: list[Callable[[ErrorInfo], None]] = []
+        self.error_callbacks: List[Callable[[ErrorInfo], None]] = []
         self.retry_strategies: Dict[Type[Exception], Callable[[ErrorInfo], bool]] = {}
         self._setup_default_retry_strategies()
 

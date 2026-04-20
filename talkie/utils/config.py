@@ -7,6 +7,8 @@ from typing import Dict, Optional
 
 from pydantic import BaseModel, Field
 
+from talkie.__version__ import __version__
+
 
 class Environment(BaseModel):
     """Модель для описания окружения."""
@@ -23,7 +25,7 @@ class Config(BaseModel):
     """Talkie configuration model."""
 
     default_headers: Dict[str, str] = Field(
-        default_factory=lambda: {"User-Agent": "Talkie/0.1.0"},
+        default_factory=lambda: {"User-Agent": f"Talkie/{__version__}"},
         description="Default headers"
     )
     environments: Dict[str, Environment] = Field(

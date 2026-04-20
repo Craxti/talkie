@@ -6,6 +6,7 @@ import os
 from pathlib import Path
 from unittest.mock import patch, mock_open
 import pytest
+from talkie.__version__ import __version__
 from talkie.utils.config import Config, Environment, load_config, save_config, get_config_path
 
 
@@ -59,7 +60,7 @@ class TestConfig:
     def test_config_creation(self):
         """Test config creation."""
         config = Config()
-        assert config.default_headers == {"User-Agent": "Talkie/0.1.0"}
+        assert config.default_headers == {"User-Agent": f"Talkie/{__version__}"}
         assert config.environments == {}
         assert config.active_environment is None
 
@@ -99,7 +100,7 @@ class TestConfig:
 
                 config = Config.load_default()
                 assert isinstance(config, Config)
-                assert config.default_headers == {"User-Agent": "Talkie/0.1.0"}
+                assert config.default_headers == {"User-Agent": f"Talkie/{__version__}"}
 
     def test_config_load_from_file(self):
         """Test loading config from file."""

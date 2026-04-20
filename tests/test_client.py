@@ -35,7 +35,8 @@ class TestHttpClient:
             mock_response.status_code = 200
             mock_response.headers = {"Content-Type": "application/json"}
             mock_response.text = '{"result": "success"}'
-            
+            mock_response.elapsed = __import__("datetime").timedelta(milliseconds=50)
+
             client.client.request = Mock(return_value=mock_response)
             
             result = client.request("GET", "https://example.com")
@@ -58,7 +59,8 @@ class TestHttpClient:
             mock_response.status_code = 201
             mock_response.headers = {"Location": "https://example.com/resource/1"}
             mock_response.text = '{"id": 1}'
-            
+            mock_response.elapsed = __import__("datetime").timedelta(milliseconds=50)
+
             client.client.request = Mock(return_value=mock_response)
             
             result = client.request(

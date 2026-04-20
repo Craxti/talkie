@@ -108,7 +108,7 @@ Talkie combines the best of both worlds: the simplicity of HTTPie and the power 
 - You want **searchable history** — find, repeat, and export past requests
 
 **When to choose Talkie over curl:**
-- You prefer **human-friendly syntax** — `talkie post /users name=John` instead of `-d '{"name":"John"}'`
+- You prefer **human-friendly syntax** — `talkie post /users name=John` or `-F name=John` instead of raw `-d`
 - You want **colored, formatted output** — JSON/XML/HTML with syntax highlighting
 - You need **environments** — switch between dev/staging/prod with one config
 - You don't want to remember curl flags — intuitive `-H`, `-q`, `-o` options
@@ -150,6 +150,8 @@ Talkie combines the best of both worlds: the simplicity of HTTPie and the power 
 pip install talkie
 ```
 
+This also installs the **`http`** console script: `http GET https://example.com` is translated to `talkie get …` (HTTPie-style verb first).
+
 ### From source code
 
 ```bash
@@ -166,10 +168,13 @@ pip install -e .
 # GET request
 talkie get https://api.example.com/users
 
-# POST request with JSON data (automatic type detection)
+# POST request with JSON body (httpie-style: after URL use key=value / key:=json, or -F)
 talkie post https://api.example.com/users name=John age:=30 is_admin:=true
+# same with explicit -F:
+talkie post https://api.example.com/users -F name=John -F age:=30 -F is_admin:=true
 
 # PUT request
+talkie put https://api.example.com/users/1 -F name=Peter
 talkie put https://api.example.com/users/1 name=Peter
 
 # DELETE request
@@ -217,8 +222,14 @@ talkie curl https://api.example.com/users -H "Authorization: Bearer token123"
 # Add curl command to regular request
 talkie get https://api.example.com/users --curl
 
-# Configure curl parameters
-talkie curl https://api.example.com/users -X POST -d "name=John" -d "age:=30" -v -k
+# Build curl with method, headers, and query (no network)
+talkie curl https://api.example.com/users -X POST -H "Content-Type: application/json" -q page=1
+
+# Run a pasted curl one-liner
+talkie from-curl 'curl -s https://httpbin.org/get'
+
+# Guided tour (GET + pretty output + history)
+talkie demo
 ```
 
 ### OpenAPI Inspection
@@ -302,6 +313,16 @@ talkie history export history.json
 
 # Import history from file
 talkie history import history.json
+
+# Clear all history
+talkie history clear --yes
+
+# Advanced search (time range, status band, host)
+talkie history search --domain api.example.com --status-min 400 --status-max 599 --sort desc
+
+# Optional SQLite store (better for very large history)
+# export TALKIE_HISTORY_BACKEND=sqlite
+# export TALKIE_HISTORY_FILE=~/.talkie/history.sqlite
 ```
 
 ### Parallel Request Execution
@@ -313,7 +334,8 @@ talkie parallel -f requests.txt
 # File with requests (requests.txt) has format:
 # GET https://api.example.com/users/1
 # GET https://api.example.com/users/2
-# POST https://api.example.com/users name=John
+# POST https://api.example.com/users -F name=John
+# POST https://api.example.com/users name=John age:=30
 
 # Execute multiple requests with parallelism limit
 talkie parallel -f requests.txt --concurrency 5
@@ -341,7 +363,7 @@ mkdir -p ~/.talkie
 cat > ~/.talkie/config.json << EOF
 {
   "default_headers": {
-    "User-Agent": "Talkie/0.1.0",
+    "User-Agent": "Talkie/0.2.0",
     "Accept": "application/json"
   },
   "environments": {
@@ -388,7 +410,7 @@ talkie get https://dev-api.example.com/users
 ```json
 {
   "default_headers": {
-    "User-Agent": "Talkie/0.1.0",
+    "User-Agent": "Talkie/0.2.0",
     "Accept": "application/json",
     "X-API-Key": "your-api-key"
   }

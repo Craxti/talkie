@@ -4,6 +4,8 @@ import json
 from typing import Dict, Any, Optional, List
 from dataclasses import dataclass
 
+import httpx
+
 
 @dataclass
 class GraphQLResponse:
@@ -51,12 +53,13 @@ class GraphQLClient:
         if operation_name:
             payload["operationName"] = operation_name
 
-        # In a real implementation, this would make an HTTP request
-        # For now, return a mock response
-        return GraphQLResponse(
-            data={"message": "GraphQL query executed"},
-            errors=None
-        )
+        return self._post(payload)
+
+    def _post(self, payload: Dict[str, Any], timeout: float = 30.0) -> GraphQLResponse:
+        with httpx.Client(timeout=timeout, follow_redirects=True) as client:
+            r = client.post(self.endpoint, headers=dict(self.headers), json=payload)
+            r.raise_for_status()
+            return parse_graphql_response(r.text)
 
     def mutation(
         self,
@@ -82,12 +85,7 @@ class GraphQLClient:
         if operation_name:
             payload["operationName"] = operation_name
 
-        # In a real implementation, this would make an HTTP request
-        # For now, return a mock response
-        return GraphQLResponse(
-            data={"message": "GraphQL mutation executed"},
-            errors=None
-        )
+        return self._post(payload)
 
 
 def build_graphql_query(

@@ -54,7 +54,7 @@ class CacheKeyData:
         return asdict(self)
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> 'CacheEntry':
+    def from_dict(cls, data: Dict[str, Any]) -> "CacheKeyData":
         """Create instance from dictionary."""
         return cls(**data)
 
