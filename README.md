@@ -363,7 +363,7 @@ mkdir -p ~/.talkie
 cat > ~/.talkie/config.json << EOF
 {
   "default_headers": {
-    "User-Agent": "Talkie/0.2.0",
+    "User-Agent": "Talkie/0.2.1",
     "Accept": "application/json"
   },
   "environments": {
@@ -410,7 +410,7 @@ talkie get https://dev-api.example.com/users
 ```json
 {
   "default_headers": {
-    "User-Agent": "Talkie/0.2.0",
+    "User-Agent": "Talkie/0.2.1",
     "Accept": "application/json",
     "X-API-Key": "your-api-key"
   }

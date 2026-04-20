@@ -17,6 +17,14 @@ pytest_httpserver = pytest.importorskip("pytest_httpserver")
 HTTPServer = pytest_httpserver.HTTPServer
 
 
+def _out(result) -> str:
+    """Cross-version CliRunner output helper (stdout/stderr mixing differs by Click)."""
+    combined = getattr(result, "output", "")
+    if combined:
+        return combined
+    return result.stdout
+
+
 @pytest.fixture
 def runner() -> CliRunner:
     return CliRunner()
@@ -43,9 +51,8 @@ def test_readme_get_json(runner: CliRunner, talkie_env: None, http_srv: HTTPServ
     http_srv.expect_request("/users", method="GET").respond_with_json({"items": []})
     url = http_srv.url_for("/users")
     result = runner.invoke(app, ["get", url, "--json"])
-    assert result.exit_code == 0, result.stdout
-    # Rich may write to stderr; Click merges stderr into stdout by default.
-    out = result.stdout
+    out = _out(result)
+    assert result.exit_code == 0, out
     assert "items" in out
 
 
@@ -55,10 +62,10 @@ def test_readme_post_positional_and_history(
     http_srv.expect_request("/create", method="POST").respond_with_json({"ok": True})
     url = http_srv.url_for("/create")
     result = runner.invoke(app, ["post", url, "name=Ann", "n:=1"])
-    assert result.exit_code == 0, result.stdout
+    assert result.exit_code == 0, _out(result)
 
     h = runner.invoke(app, ["history", "list", "--limit", "5"])
-    hout = h.stdout
+    hout = _out(h)
     assert h.exit_code == 0
     assert http_srv.host in hout or "/create" in hout
 
@@ -92,7 +99,7 @@ def test_readme_parallel_file(
     )
 
     r = runner.invoke(app, ["parallel", "-f", str(f), "--concurrency", "2"])
-    rout = r.stdout
+    rout = _out(r)
     assert r.exit_code == 0, rout
     assert "200" in rout
 
@@ -109,8 +116,8 @@ def test_readme_curl_generate(runner: CliRunner, talkie_env: None) -> None:
             "page=1",
         ],
     )
-    assert r.exit_code == 0
-    out = r.stdout
+    out = _out(r)
+    assert r.exit_code == 0, out
     assert "curl" in out
     assert "example.com" in out
 
@@ -119,8 +126,8 @@ def test_readme_format_json(tmp_path: Path, runner: CliRunner) -> None:
     p = tmp_path / "t.json"
     p.write_text('{"z":1,"a":2}', encoding="utf-8")
     r = runner.invoke(app, ["format", str(p)])
-    out = r.stdout
-    assert r.exit_code == 0
+    out = _out(r)
+    assert r.exit_code == 0, out
     assert "z" in out
 
 
@@ -133,8 +140,8 @@ def test_readme_openapi_local_file(tmp_path: Path, runner: CliRunner) -> None:
     p = tmp_path / "api.yaml"
     p.write_text(yaml.dump(spec), encoding="utf-8")
     r = runner.invoke(app, ["openapi", str(p), "--endpoints"])
-    out = r.stdout
-    assert r.exit_code == 0
+    out = _out(r)
+    assert r.exit_code == 0, out
     assert "/hello" in out
 
 
@@ -146,8 +153,8 @@ def test_readme_graphql_local(
     )
     url = http_srv.url_for("/graphql")
     r = runner.invoke(app, ["graphql", url, "-q", "{ hello }"])
-    out = r.stdout
-    assert r.exit_code == 0
+    out = _out(r)
+    assert r.exit_code == 0, out
     assert "world" in out
 
 
@@ -178,7 +185,7 @@ def test_readme_headers_query_and_output_file(
             str(out_file),
         ],
     )
-    assert r.exit_code == 0, r.stdout
+    assert r.exit_code == 0, _out(r)
     assert out_file.exists()
     assert "ok" in out_file.read_text(encoding="utf-8")
 
@@ -189,19 +196,22 @@ def test_readme_output_modes_verbose_headers_and_format(
     http_srv.expect_request("/users", method="GET").respond_with_json({"items": [1]})
     url = http_srv.url_for("/users")
     rv = runner.invoke(app, ["get", url, "-v"])
-    assert rv.exit_code == 0, rv.stdout
-    assert "Response headers" in rv.stdout
+    rv_out = _out(rv)
+    assert rv.exit_code == 0, rv_out
+    assert "Response headers" in rv_out
 
     rh = runner.invoke(app, ["get", url, "--headers"])
-    assert rh.exit_code == 0, rh.stdout
-    assert "content-type" in rh.stdout.lower()
+    rh_out = _out(rh)
+    assert rh.exit_code == 0, rh_out
+    assert "content-type" in rh_out.lower()
 
     http_srv.expect_request("/xml", method="GET").respond_with_data(
         "<root><item>1</item></root>", content_type="application/xml"
     )
     rx = runner.invoke(app, ["get", http_srv.url_for("/xml"), "-f", "xml"])
-    assert rx.exit_code == 0, rx.stdout
-    assert "root" in rx.stdout.lower()
+    rx_out = _out(rx)
+    assert rx.exit_code == 0, rx_out
+    assert "root" in rx_out.lower()
 
 
 def test_readme_curl_related_commands(
@@ -210,12 +220,14 @@ def test_readme_curl_related_commands(
     http_srv.expect_request("/users", method="GET").respond_with_json({"ok": True})
     url = http_srv.url_for("/users")
     r = runner.invoke(app, ["get", url, "--curl"])
-    assert r.exit_code == 0, r.stdout
-    assert "curl" in r.stdout
+    r_out = _out(r)
+    assert r.exit_code == 0, r_out
+    assert "curl" in r_out
 
     rc = runner.invoke(app, ["from-curl", f"curl -s {url}"])
-    assert rc.exit_code == 0, rc.stdout
-    assert "200" in rc.stdout or "ok" in rc.stdout.lower()
+    rc_out = _out(rc)
+    assert rc.exit_code == 0, rc_out
+    assert "200" in rc_out or "ok" in rc_out.lower()
 
 
 def test_readme_demo_command_mocked(runner: CliRunner) -> None:
@@ -230,8 +242,9 @@ def test_readme_demo_command_mocked(runner: CliRunner) -> None:
     }
     with patch("talkie.cli.main.execute_request", return_value=fake_result):
         r = runner.invoke(app, ["demo"])
-    assert r.exit_code == 0, r.stdout
-    assert "Talkie demo" in r.stdout
+    r_out = _out(r)
+    assert r.exit_code == 0, r_out
+    assert "Talkie demo" in r_out
 
 
 def test_readme_openapi_examples(
@@ -251,8 +264,9 @@ def test_readme_openapi_examples(
     p = tmp_path / "api.yaml"
     p.write_text(yaml.dump(spec), encoding="utf-8")
     r = runner.invoke(app, ["openapi", str(p), "--examples"])
-    assert r.exit_code == 0, r.stdout
-    assert "https://api.example.com/users" in r.stdout
+    r_out = _out(r)
+    assert r.exit_code == 0, r_out
+    assert "https://api.example.com/users" in r_out
 
 
 def test_readme_graphql_file_and_variables(
@@ -274,8 +288,9 @@ def test_readme_graphql_file_and_variables(
             "id=123",
         ],
     )
-    assert r.exit_code == 0, r.stdout
-    assert "123" in r.stdout
+    r_out = _out(r)
+    assert r.exit_code == 0, r_out
+    assert "123" in r_out
 
 
 def test_readme_history_search_export_import_clear_and_repeat(
@@ -289,8 +304,9 @@ def test_readme_history_search_export_import_clear_and_repeat(
     assert runner.invoke(app, ["get", u2]).exit_code == 0
 
     s = runner.invoke(app, ["history", "search", "--method", "GET", "--url", "users"])
-    assert s.exit_code == 0, s.stdout
-    assert "users" in s.stdout
+    s_out = _out(s)
+    assert s.exit_code == 0, s_out
+    assert "users" in s_out
 
     a = runner.invoke(
         app,
@@ -307,19 +323,20 @@ def test_readme_history_search_export_import_clear_and_repeat(
             "desc",
         ],
     )
-    assert a.exit_code == 0, a.stdout
+    assert a.exit_code == 0, _out(a)
 
     efile = tmp_path / "history.json"
     ex = runner.invoke(app, ["history", "export", str(efile)])
-    assert ex.exit_code == 0, ex.stdout
+    assert ex.exit_code == 0, _out(ex)
     assert efile.exists()
 
     lc = runner.invoke(app, ["history", "clear", "--yes"])
-    assert lc.exit_code == 0, lc.stdout
+    assert lc.exit_code == 0, _out(lc)
 
     im = runner.invoke(app, ["history", "import", str(efile)])
-    assert im.exit_code == 0, im.stdout
-    assert "Imported" in im.stdout
+    im_out = _out(im)
+    assert im.exit_code == 0, im_out
+    assert "Imported" in im_out
 
     seeded = [
         {
@@ -336,10 +353,10 @@ def test_readme_history_search_export_import_clear_and_repeat(
     seed_file = tmp_path / "seed-history.json"
     seed_file.write_text(json.dumps(seeded), encoding="utf-8")
     sim = runner.invoke(app, ["history", "import", str(seed_file)])
-    assert sim.exit_code == 0, sim.stdout
+    assert sim.exit_code == 0, _out(sim)
 
     rep = runner.invoke(app, ["history", "repeat", "12345678"])
-    assert rep.exit_code == 0, rep.stdout
+    assert rep.exit_code == 0, _out(rep)
 
 
 def test_readme_parallel_output_dir_and_base_urls(
@@ -364,6 +381,6 @@ def test_readme_parallel_output_dir_and_base_urls(
             str(out_dir),
         ],
     )
-    assert r.exit_code == 0, r.stdout
+    assert r.exit_code == 0, _out(r)
     files = list(out_dir.glob("resp_*.txt"))
     assert files

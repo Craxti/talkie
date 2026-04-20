@@ -1,7 +1,7 @@
 """Input validation utilities for Talkie."""
 
 import re
-from typing import List, Dict, Any, Optional
+from typing import Any, Dict, List, Optional, Tuple
 from urllib.parse import urlparse
 
 
@@ -142,7 +142,7 @@ class InputValidator:
         return parsed_params
 
     @staticmethod
-    def validate_data_params(data: List[str]) -> tuple[Dict[str, Any], Dict[str, Any]]:
+    def validate_data_params(data: List[str]) -> Tuple[Dict[str, Any], Dict[str, Any]]:
         """
         Validate and parse data parameters.
 
