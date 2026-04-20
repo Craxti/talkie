@@ -180,10 +180,7 @@ class HistoryManager:
         """Persist history (JSON backend)."""
         if self._sqlite:
             return
-        try:
-            _atomic_write_json(self.history_file, self.history)
-        except HistoryIOError:
-            raise
+        _atomic_write_json(self.history_file, self.history)
 
     def add_request(self, request_data: RequestData) -> None:
         """Append one request (redacted)."""

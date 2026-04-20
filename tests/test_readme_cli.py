@@ -10,12 +10,11 @@ import pytest
 import yaml
 from typer.testing import CliRunner
 
-pytest.importorskip("pytest_httpserver")
-
-from pytest_httpserver import HTTPServer
-
 from talkie.cli.main import app
 from talkie.utils.history import reset_history_manager
+
+pytest_httpserver = pytest.importorskip("pytest_httpserver")
+HTTPServer = pytest_httpserver.HTTPServer
 
 
 @pytest.fixture

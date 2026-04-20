@@ -5,8 +5,6 @@ from __future__ import annotations
 import json
 from typing import Any, Dict, List, Optional
 
-import httpx
-
 from talkie.core.client import HttpClient
 from talkie.utils.config import Config, load_config
 from talkie.utils.history import add_to_history
@@ -107,15 +105,12 @@ def execute_request(
     elif data_dict:
         req_kwargs["data"] = data_dict
 
-    try:
-        with HttpClient(
-            timeout=timeout,
-            follow_redirects=follow_redirects,
-            verify=verify,
-        ) as hc:
-            result = hc.request(method.upper(), full_url, **req_kwargs)
-    except httpx.HTTPError:
-        raise
+    with HttpClient(
+        timeout=timeout,
+        follow_redirects=follow_redirects,
+        verify=verify,
+    ) as hc:
+        result = hc.request(method.upper(), full_url, **req_kwargs)
 
     elapsed = result.get("elapsed_seconds") or 0.0
     out = {
